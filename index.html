@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LYRIC GEN — v0.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;700;900&family=M+PLUS+1:wght@400;700;900&family=M+PLUS+1+Code:wght@400;700&family=Zen+Kaku+Gothic+New:wght@700;900&family=BIZ+UDPGothic:wght@400;700&family=Dela+Gothic+One&family=Shippori+Mincho+B1:wght@700;800&family=Klee+One:wght@600&family=RocknRoll+One&family=Yomogi&family=DotGothic16&family=Yusei+Magic&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;700;900&family=M+PLUS+1:wght@400;700;900&family=M+PLUS+1+Code:wght@400;700&family=Zen+Kaku+Gothic+New:wght@700;900&family=Zen+Maru+Gothic:wght@400;700&family=BIZ+UDPGothic:wght@400;700&family=Dela+Gothic+One&family=Shippori+Mincho+B1:wght@700;800&family=Kaisei+Tokumin:wght@700;800&family=Hina+Mincho&family=Klee+One:wght@600&family=Kiwi+Maru:wght@400;500&family=RocknRoll+One&family=Reggae+One&family=Rampart+One&family=Train+One&family=Stick&family=Potta+One&family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=New+Tegomin&family=Yomogi&family=DotGothic16&family=Yusei+Magic&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════
    DESIGN SYSTEM — Neo-Industrial Studio
@@ -197,6 +197,22 @@ body::before {
 
 /* focus-visible: スキル Section 3-5 準拠 */
 .btn-tile:focus-visible { outline:2px solid var(--cy); outline-offset:2px; }
+
+/* ── 漢字制限警告バッジ ── */
+.kanji-warn {
+  position:absolute; top:3px; right:3px;
+  font-size:7px; line-height:1;
+  background:rgba(240,168,0,.22);
+  color:var(--am);
+  border:1px solid rgba(240,168,0,.5);
+  border-radius:2px;
+  padding:1px 3px;
+  letter-spacing:.3px;
+  pointer-events:none;
+  font-family:var(--mono);
+}
+/* btn-tile に position:relative を追加（バッジの基準点） */
+.btn-tile { position:relative; }
 .btn-tile.vhs-btn.on .lbl { color:var(--am); }
 
 /* ── SLIDER ROW ── */
@@ -449,21 +465,35 @@ textarea::placeholder { color:var(--dust); font-size:11px; }
 
     <!-- フォント -->
     <div class="sec">
-      <div class="sec-head"><span class="sec-label">Typeface</span><span class="sec-badge">全漢字対応</span></div>
+      <div class="sec-head"><span class="sec-label">Typeface</span><span class="sec-badge">×24 ⚠=漢字制限</span></div>
       <div class="sec-body">
         <div class="g3" id="fontGrid">
           <button class="btn-tile on" data-f="auto"><span class="ico">🎲</span><span class="lbl">AUTO</span></button>
-          <button class="btn-tile" data-f="dela"><span class="ico" style="font-family:'Dela Gothic One'">亜</span><span class="lbl">DELA</span></button>
-          <button class="btn-tile" data-f="mplus"><span class="ico" style="font-family:'M PLUS 1';font-weight:900">亜</span><span class="lbl">M+1</span></button>
-          <button class="btn-tile" data-f="zen"><span class="ico" style="font-family:'Zen Kaku Gothic New';font-weight:900">亜</span><span class="lbl">ZEN</span></button>
-          <button class="btn-tile" data-f="biz"><span class="ico" style="font-family:'BIZ UDPGothic';font-weight:700">亜</span><span class="lbl">BIZ UD</span></button>
-          <button class="btn-tile" data-f="shippori"><span class="ico" style="font-family:'Shippori Mincho B1';font-weight:800">亜</span><span class="lbl">しっぽり</span></button>
-          <button class="btn-tile" data-f="klee"><span class="ico" style="font-family:'Klee One'">亜</span><span class="lbl">クレー</span></button>
-          <button class="btn-tile" data-f="rocknroll"><span class="ico" style="font-family:'RocknRoll One'">亜</span><span class="lbl">RnR</span></button>
-          <button class="btn-tile" data-f="yomogi"><span class="ico" style="font-family:'Yomogi'">亜</span><span class="lbl">よもぎ</span></button>
-          <button class="btn-tile" data-f="dot16"><span class="ico" style="font-family:'DotGothic16'">亜</span><span class="lbl">DOT<span class="sub"> GAME</span></span></button>
-          <button class="btn-tile" data-f="mcode"><span class="ico" style="font-family:'M PLUS 1 Code';font-weight:700">亜</span><span class="lbl">CODE<span class="sub"> MONO</span></span></button>
-          <button class="btn-tile" data-f="grunge"><span class="ico" style="font-family:'Yusei Magic'">亜</span><span class="lbl">GRUNGE<span class="sub"> かすれ</span></span></button>
+          <!-- ── 漢字フルカバー ── -->
+          <button class="btn-tile" data-f="dela"><span class="ico" style="font-family:'Dela Gothic One'">亜</span><span class="lbl">DELA<span class="sub">極太Gothic</span></span></button>
+          <button class="btn-tile" data-f="mplus"><span class="ico" style="font-family:'M PLUS 1';font-weight:900">亜</span><span class="lbl">M+1<span class="sub">モダンGothic</span></span></button>
+          <button class="btn-tile" data-f="zen"><span class="ico" style="font-family:'Zen Kaku Gothic New';font-weight:900">亜</span><span class="lbl">ZEN<span class="sub">角ゴシック</span></span></button>
+          <button class="btn-tile" data-f="biz"><span class="ico" style="font-family:'BIZ UDPGothic';font-weight:700">亜</span><span class="lbl">BIZ UD<span class="sub">明瞭Gothic</span></span></button>
+          <button class="btn-tile" data-f="shippori"><span class="ico" style="font-family:'Shippori Mincho B1';font-weight:800">亜</span><span class="lbl">しっぽり<span class="sub">墨だまり明朝</span></span></button>
+          <button class="btn-tile" data-f="kaisei"><span class="ico" style="font-family:'Kaisei Tokumin';font-weight:800">亜</span><span class="lbl">解星<span class="sub">特太明朝</span></span></button>
+          <button class="btn-tile" data-f="hina"><span class="ico" style="font-family:'Hina Mincho'">亜</span><span class="lbl">ひな明朝<span class="sub">古風かわいい</span></span></button>
+          <button class="btn-tile" data-f="klee"><span class="ico" style="font-family:'Klee One'">亜</span><span class="lbl">クレー<span class="sub">ペン手書き</span></span></button>
+          <button class="btn-tile" data-f="rocknroll"><span class="ico" style="font-family:'RocknRoll One'">亜</span><span class="lbl">RocknRoll<span class="sub">躍動感</span></span></button>
+          <button class="btn-tile" data-f="reggae"><span class="ico" style="font-family:'Reggae One'">亜</span><span class="lbl">REGGAE<span class="sub">ダイナミック</span></span></button>
+          <button class="btn-tile" data-f="rampart"><span class="ico" style="font-family:'Rampart One'">亜</span><span class="lbl">RAMPART<span class="sub">袋文字3D</span></span></button>
+          <button class="btn-tile" data-f="train"><span class="ico" style="font-family:'Train One'">亜</span><span class="lbl">TRAIN<span class="sub">二重線</span></span></button>
+          <button class="btn-tile" data-f="stick"><span class="ico" style="font-family:'Stick'">亜</span><span class="lbl">STICK<span class="sub">棒線体</span></span></button>
+          <button class="btn-tile" data-f="potta"><span class="ico" style="font-family:'Potta One'">亜</span><span class="lbl">ポッタ<span class="sub">筆ポップ</span></span></button>
+          <button class="btn-tile" data-f="mochiy"><span class="ico" style="font-family:'Mochiy Pop One'">亜</span><span class="lbl">もちポップ<span class="sub">もちもち</span></span></button>
+          <button class="btn-tile" data-f="yomogi"><span class="ico" style="font-family:'Yomogi'">亜</span><span class="lbl">よもぎ<span class="sub">手書き</span></span></button>
+          <button class="btn-tile" data-f="dot16"><span class="ico" style="font-family:'DotGothic16'">亜</span><span class="lbl">DOT<span class="sub">ゲーム風</span></span></button>
+          <button class="btn-tile" data-f="mcode"><span class="ico" style="font-family:'M PLUS 1 Code';font-weight:700">亜</span><span class="lbl">CODE<span class="sub">モノスペース</span></span></button>
+          <button class="btn-tile" data-f="grunge"><span class="ico" style="font-family:'Yusei Magic'">亜</span><span class="lbl">GRUNGE<span class="sub">かすれ</span></span></button>
+          <!-- ── 漢字制限あり ── -->
+          <button class="btn-tile" data-f="hachi"><span class="kanji-warn">⚠ 常用漢字</span><span class="ico" style="font-family:'Hachi Maru Pop'">亜</span><span class="lbl">はちまる<span class="sub">丸文字80's</span></span></button>
+          <button class="btn-tile" data-f="kiwi"><span class="kanji-warn">⚠ 常用漢字</span><span class="ico" style="font-family:'Kiwi Maru';font-weight:500">亜</span><span class="lbl">キウイ丸<span class="sub">レトロ丸G</span></span></button>
+          <button class="btn-tile" data-f="zenmaru"><span class="kanji-warn">⚠ 常用漢字</span><span class="ico" style="font-family:'Zen Maru Gothic';font-weight:700">亜</span><span class="lbl">ZEN丸<span class="sub">モダン丸G</span></span></button>
+          <button class="btn-tile" data-f="tegomin"><span class="kanji-warn">⚠ 漢字一部</span><span class="ico" style="font-family:'New Tegomin'">亜</span><span class="lbl">テゴミン<span class="sub">揺らぎ明朝</span></span></button>
         </div>
       </div>
     </div>
@@ -616,12 +646,25 @@ textarea::placeholder { color:var(--dust); font-size:11px; }
       <button class="btn-tile" data-f="zen"><span class="ico" style="font-family:'Zen Kaku Gothic New';font-weight:900">亜</span><span class="lbl">ZEN</span></button>
       <button class="btn-tile" data-f="biz"><span class="ico" style="font-family:'BIZ UDPGothic';font-weight:700">亜</span><span class="lbl">BIZ UD</span></button>
       <button class="btn-tile" data-f="shippori"><span class="ico" style="font-family:'Shippori Mincho B1';font-weight:800">亜</span><span class="lbl">しっぽり</span></button>
+      <button class="btn-tile" data-f="kaisei"><span class="ico" style="font-family:'Kaisei Tokumin';font-weight:800">亜</span><span class="lbl">解星</span></button>
+      <button class="btn-tile" data-f="hina"><span class="ico" style="font-family:'Hina Mincho'">亜</span><span class="lbl">ひな明朝</span></button>
       <button class="btn-tile" data-f="klee"><span class="ico" style="font-family:'Klee One'">亜</span><span class="lbl">クレー</span></button>
       <button class="btn-tile" data-f="rocknroll"><span class="ico" style="font-family:'RocknRoll One'">亜</span><span class="lbl">RnR</span></button>
+      <button class="btn-tile" data-f="reggae"><span class="ico" style="font-family:'Reggae One'">亜</span><span class="lbl">REGGAE</span></button>
+      <button class="btn-tile" data-f="rampart"><span class="ico" style="font-family:'Rampart One'">亜</span><span class="lbl">RAMPART</span></button>
+      <button class="btn-tile" data-f="train"><span class="ico" style="font-family:'Train One'">亜</span><span class="lbl">TRAIN</span></button>
+      <button class="btn-tile" data-f="stick"><span class="ico" style="font-family:'Stick'">亜</span><span class="lbl">STICK</span></button>
+      <button class="btn-tile" data-f="potta"><span class="ico" style="font-family:'Potta One'">亜</span><span class="lbl">ポッタ</span></button>
+      <button class="btn-tile" data-f="mochiy"><span class="ico" style="font-family:'Mochiy Pop One'">亜</span><span class="lbl">もちポップ</span></button>
       <button class="btn-tile" data-f="yomogi"><span class="ico" style="font-family:'Yomogi'">亜</span><span class="lbl">よもぎ</span></button>
       <button class="btn-tile" data-f="dot16"><span class="ico" style="font-family:'DotGothic16'">亜</span><span class="lbl">DOT</span></button>
       <button class="btn-tile" data-f="mcode"><span class="ico" style="font-family:'M PLUS 1 Code';font-weight:700">亜</span><span class="lbl">CODE</span></button>
       <button class="btn-tile" data-f="grunge"><span class="ico" style="font-family:'Yusei Magic'">亜</span><span class="lbl">GRUNGE</span></button>
+      <!-- 漢字制限あり -->
+      <button class="btn-tile" data-f="hachi"><span class="kanji-warn">⚠常用</span><span class="ico" style="font-family:'Hachi Maru Pop'">亜</span><span class="lbl">はちまる</span></button>
+      <button class="btn-tile" data-f="kiwi"><span class="kanji-warn">⚠常用</span><span class="ico" style="font-family:'Kiwi Maru';font-weight:500">亜</span><span class="lbl">キウイ丸</span></button>
+      <button class="btn-tile" data-f="zenmaru"><span class="kanji-warn">⚠常用</span><span class="ico" style="font-family:'Zen Maru Gothic';font-weight:700">亜</span><span class="lbl">ZEN丸</span></button>
+      <button class="btn-tile" data-f="tegomin"><span class="kanji-warn">⚠一部</span><span class="ico" style="font-family:'New Tegomin'">亜</span><span class="lbl">テゴミン</span></button>
     </div>
     <div class="sec-head" style="margin-top:4px">
       <span class="sec-label">Decoration</span>
@@ -748,18 +791,34 @@ textarea::placeholder { color:var(--dust); font-size:11px; }
 // FONT MAP
 // ══════════════════════════════════════════
 const FM={
-  dela:    {w:'900',f:'"Dela Gothic One","Noto Sans JP"'},
-  mplus:   {w:'900',f:'"M PLUS 1","Noto Sans JP"'},
-  zen:     {w:'900',f:'"Zen Kaku Gothic New","Noto Sans JP"'},
-  biz:     {w:'700',f:'"BIZ UDPGothic","Noto Sans JP"'},
-  shippori:{w:'800',f:'"Shippori Mincho B1","Noto Sans JP"'},
-  klee:    {w:'600',f:'"Klee One","Noto Sans JP"'},
-  rocknroll:{w:'400',f:'"RocknRoll One","Noto Sans JP"'},
-  yomogi:  {w:'400',f:'"Yomogi","Noto Sans JP"'},
-  dot16:   {w:'400',f:'"DotGothic16","Noto Sans JP"'},
-  mcode:   {w:'700',f:'"M PLUS 1 Code","Noto Sans JP"'},
-  grunge:  {w:'400',f:'"Yusei Magic","Noto Sans JP"', grunge:true},
-  noto:    {w:'900',f:'"Noto Sans JP"'},
+  // ── 漢字フルカバー（全常用漢字〜第三水準） ──────────────────
+  dela:      {w:'900',f:'"Dela Gothic One","Noto Sans JP"'},
+  mplus:     {w:'900',f:'"M PLUS 1","Noto Sans JP"'},
+  zen:       {w:'900',f:'"Zen Kaku Gothic New","Noto Sans JP"'},
+  biz:       {w:'700',f:'"BIZ UDPGothic","Noto Sans JP"'},
+  shippori:  {w:'800',f:'"Shippori Mincho B1","Noto Sans JP"'},
+  klee:      {w:'600',f:'"Klee One","Noto Sans JP"'},
+  rocknroll: {w:'400',f:'"RocknRoll One","Noto Sans JP"'},
+  yomogi:    {w:'400',f:'"Yomogi","Noto Sans JP"'},
+  dot16:     {w:'400',f:'"DotGothic16","Noto Sans JP"'},
+  mcode:     {w:'700',f:'"M PLUS 1 Code","Noto Sans JP"'},
+  // ── 追加フォント: 漢字フルカバー ────────────────────────────
+  reggae:    {w:'400',f:'"Reggae One","Noto Sans JP"'},          // AdobeJapan1-3
+  rampart:   {w:'400',f:'"Rampart One","Noto Sans JP"'},         // AdobeJapan1-3・袋文字
+  train:     {w:'400',f:'"Train One","Noto Sans JP"'},           // AdobeJapan1-3・二重線
+  stick:     {w:'400',f:'"Stick","Noto Sans JP"'},               // AdobeJapan1-3・棒線
+  kaisei:    {w:'800',f:'"Kaisei Tokumin","Noto Sans JP"'},      // AdobeJapan1-3・特太明朝
+  potta:     {w:'400',f:'"Potta One","Noto Sans JP"'},           // JIS第1・2水準・筆ポップ
+  mochiy:    {w:'400',f:'"Mochiy Pop One","Noto Sans JP"'},      // JIS第1・2水準・もちもち
+  hina:      {w:'400',f:'"Hina Mincho","Noto Sans JP"'},         // JIS第1・2水準・古風明朝
+  // ── 追加フォント: 漢字制限あり（警告表示） ───────────────────
+  hachi:     {w:'400',f:'"Hachi Maru Pop","Noto Sans JP"',  warn:'常用漢字のみ'},
+  kiwi:      {w:'500',f:'"Kiwi Maru","Noto Sans JP"',       warn:'常用漢字のみ'},
+  tegomin:   {w:'400',f:'"New Tegomin","Noto Sans JP"',     warn:'漢字一部のみ'},
+  zenmaru:   {w:'700',f:'"Zen Maru Gothic","Noto Sans JP"', warn:'常用漢字のみ'},
+  // ── グランジ ────────────────────────────────────────────────
+  grunge:    {w:'400',f:'"Yusei Magic","Noto Sans JP"', grunge:true},
+  noto:      {w:'900',f:'"Noto Sans JP"'},
 };
 const rFont=(gc,fo)=>(fo==='auto'||!FM[fo])?FM[gc.font]||FM.noto:FM[fo];
 
