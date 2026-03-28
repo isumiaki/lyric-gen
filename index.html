@@ -996,7 +996,11 @@ function updCM(t,v){
   document.getElementById('m-hex_'+t).textContent=v.slice(0,7);
 }
 function getLyrics(){
-  return(document.getElementById('m-lyrics-ta')?.value.trim())||document.getElementById('lyrics')?.value.trim()||'';
+  // SP側・PC側どちらに入力があっても正しく取得する
+  // || 演算子は空文字が falsy なので両方確認
+  const sp = document.getElementById('m-lyrics-ta')?.value.trim() || '';
+  const pc = document.getElementById('lyrics')?.value.trim() || '';
+  return sp || pc;
 }
 
 // Sheet
@@ -1022,61 +1026,95 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementB
 // ══════════════════════════════════════════
 // GENERATE
 // ══════════════════════════════════════════
+// ── フォント強制ロード＆待機 ──
+// Canvas は document.fonts が ready になるまでフォールバックで描画する。
+// Google Fonts は非同期ロードのため、切り替え直後の generate() では
+// 選択フォントがまだ利用不可な場合がある。
+// FontFace.load() で明示的にロードを待ってから描画する。
+async function ensureFont(fd, testChar='あ'){
+  // fontFaceSet.check() でロード済みか確認
+  const fontStr = `${fd.w} 40px ${fd.f}`;
+  if(document.fonts.check(fontStr, testChar)) return; // 既にロード済み
+  try {
+    // 未ロードならロードを待つ（タイムアウト3秒）
+    await Promise.race([
+      document.fonts.load(fontStr, testChar),
+      new Promise((_,reject) => setTimeout(()=>reject(new Error('timeout')), 3000))
+    ]);
+  } catch(e) {
+    // タイムアウトや失敗時はそのまま続行（フォールバックで描画）
+    console.warn('Font load warn:', fd.f, e.message);
+  }
+}
+
 function generate(){
   const raw=getLyrics();
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
   if(!lines.length){alert('歌詞を入力してください');return;}
 
-  ['outGrid','m-outGrid'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
-  saved=[];
+  // ボタンを一時無効化してローディング表示
+  const genBtns=document.querySelectorAll('.gen-btn,.mob-gen');
+  genBtns.forEach(b=>{b.disabled=true;b.textContent='Loading...';});
 
-  const decoOn=document.getElementById('decoOn').checked;
-  const fs=parseInt(gSV('sz'));
-  const yp=parseInt(gSV('yp'));
-  const glMult=parseInt(gSV('gl'))/100;
-  const autoC=document.getElementById('autoC').checked;
+  const gc=G[cG];
+  const fd=rFont(gc,cF);
 
-  lines.forEach((line,i)=>{
-    const gc=G[cG];
-    const fd=rFont(gc,cF);
-    const canvas=document.createElement('canvas');
-    canvas.width=CW;canvas.height=CH;
-    const ctx=canvas.getContext('2d');ctx.clearRect(0,0,CW,CH);
-    const tc=autoC?gc.tc:document.getElementById('pk_t').value;
-    const gc2=autoC?gc.gc:document.getElementById('pk_g').value;
-    const gb=gc.gb*glMult;
-    if(decoOn&&D[cD])D[cD](ctx,CW,CH,gc);
-    (L[cL]||L.center)(ctx,CW,CH,line,fd,gc,fs,yp,tc,gc2,gb);
-    saved.push({canvas,line,i});
+  // フォントロードを待ってから描画する（これがバグの根本修正）
+  ensureFont(fd).then(()=>{
+    ['outGrid','m-outGrid'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+    saved=[];
 
-    ['outGrid','m-outGrid'].forEach(gid=>{
-      const grid=document.getElementById(gid);if(!grid)return;
-      const card=document.createElement('div');card.className='out-card';
-      const thumb=document.createElement('div');thumb.className='card-thumb';
-      const pvc=document.createElement('canvas');pvc.width=CW;pvc.height=CH;
-      const pctx=pvc.getContext('2d');pctx.fillStyle='#090910';pctx.fillRect(0,0,CW,CH);pctx.drawImage(canvas,0,0);
-      thumb.appendChild(pvc);
-      const zoom=document.createElement('div');zoom.className='card-zoom';
-      zoom.innerHTML='<span class="zoom-icon">🔍</span>';
-      thumb.appendChild(zoom);
-      thumb.style.cursor='pointer';
-      thumb.addEventListener('click',()=>openPv(canvas,line));
-      card.appendChild(thumb);
-      const foot=document.createElement('div');foot.className='card-foot';
-      const txt=document.createElement('span');txt.className='card-txt';txt.textContent=line;foot.appendChild(txt);
-      const dlb=document.createElement('button');dlb.className='card-dl';dlb.textContent='↓';
-      dlb.addEventListener('click',e=>{e.stopPropagation();dlC(canvas,`lyric_${String(i+1).padStart(2,'0')}`);});
-      foot.appendChild(dlb);card.appendChild(foot);grid.appendChild(card);
+    const decoOn=document.getElementById('decoOn').checked;
+    const fs=parseInt(gSV('sz'));
+    const yp=parseInt(gSV('yp'));
+    const glMult=parseInt(gSV('gl'))/100;
+    const autoC=document.getElementById('autoC').checked;
+
+    lines.forEach((line,i)=>{
+      const canvas=document.createElement('canvas');
+      canvas.width=CW;canvas.height=CH;
+      const ctx=canvas.getContext('2d');ctx.clearRect(0,0,CW,CH);
+      const tc=autoC?gc.tc:document.getElementById('pk_t').value;
+      const gc2=autoC?gc.gc:document.getElementById('pk_g').value;
+      const gb=gc.gb*glMult;
+      if(decoOn&&D[cD])D[cD](ctx,CW,CH,gc);
+      (L[cL]||L.center)(ctx,CW,CH,line,fd,gc,fs,yp,tc,gc2,gb);
+      saved.push({canvas,line,i});
+
+      ['outGrid','m-outGrid'].forEach(gid=>{
+        const grid=document.getElementById(gid);if(!grid)return;
+        const card=document.createElement('div');card.className='out-card';
+        const thumb=document.createElement('div');thumb.className='card-thumb';
+        const pvc=document.createElement('canvas');pvc.width=CW;pvc.height=CH;
+        const pctx=pvc.getContext('2d');pctx.fillStyle='#090910';pctx.fillRect(0,0,CW,CH);pctx.drawImage(canvas,0,0);
+        thumb.appendChild(pvc);
+        const zoom=document.createElement('div');zoom.className='card-zoom';
+        zoom.innerHTML='<span class="zoom-icon">🔍</span>';
+        thumb.appendChild(zoom);
+        thumb.style.cursor='pointer';
+        thumb.addEventListener('click',()=>openPv(canvas,line));
+        card.appendChild(thumb);
+        const foot=document.createElement('div');foot.className='card-foot';
+        const txt=document.createElement('span');txt.className='card-txt';txt.textContent=line;foot.appendChild(txt);
+        const dlb=document.createElement('button');dlb.className='card-dl';dlb.textContent='↓';
+        dlb.addEventListener('click',e=>{e.stopPropagation();dlC(canvas,`lyric_${String(i+1).padStart(2,'0')}`);});
+        foot.appendChild(dlb);card.appendChild(foot);grid.appendChild(card);
+      });
     });
-  });
 
-  // UI update
-  const pill=document.getElementById('countPill');if(pill){pill.style.display='inline-block';pill.textContent=lines.length;}
-  document.getElementById('dlAllBtn')?.classList.add('show');
-  document.getElementById('mobDlAll')?.classList.add('show');
-  const ob=document.getElementById('mobOutBtn');
-  if(ob){ob.classList.add('live');document.getElementById('mobBadge').textContent=lines.length;}
-  if(window.innerWidth<768)openSheet();
+    // UI update
+    const pill=document.getElementById('countPill');if(pill){pill.style.display='inline-block';pill.textContent=lines.length;}
+    document.getElementById('dlAllBtn')?.classList.add('show');
+    document.getElementById('mobDlAll')?.classList.add('show');
+    const ob=document.getElementById('mobOutBtn');
+    if(ob){ob.classList.add('live');document.getElementById('mobBadge').textContent=lines.length;}
+    if(window.innerWidth<768)openSheet();
+  }).finally(()=>{
+    // ボタンを元に戻す
+    genBtns.forEach(b=>{b.disabled=false;b.textContent=b.classList.contains('mob-gen')?'▶ GENERATE':'GENERATE';});
+    // PC側gen-btnはアイコン付きに戻す
+    document.querySelectorAll('.gen-btn').forEach(b=>{b.innerHTML='<span class="dot"></span>GENERATE<span class="dot"></span>';});
+  });
 }
 
 // DL
@@ -1135,6 +1173,19 @@ function renderMem(){
   });
 }
 loadMem();
+
+// ── ページロード時に全フォントをバックグラウンド先読み ──
+// これにより初回generate()でも確実にフォントが使用可能になる
+(function preloadAllFonts(){
+  const testStr = 'あいうABC123';
+  Object.values(FM).forEach(fd => {
+    if(!fd || !fd.f) return;
+    const spec = `${fd.w} 40px ${fd.f}`;
+    if(!document.fonts.check(spec, testStr)){
+      document.fonts.load(spec, testStr).catch(()=>{});
+    }
+  });
+})();
 </script>
 </body>
 </html>
