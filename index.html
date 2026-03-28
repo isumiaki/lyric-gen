@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LYRIC GEN — v0.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;700;900&family=M+PLUS+1:wght@400;700;900&family=M+PLUS+1+Code:wght@400;700&family=Zen+Kaku+Gothic+New:wght@700;900&family=BIZ+UDPGothic:wght@400;700&family=Dela+Gothic+One&family=Shippori+Mincho+B1:wght@700;800&family=Klee+One:wght@600&family=RocknRoll+One&family=Yomogi&family=DotGothic16&family=Yusei+Magic&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   DESIGN SYSTEM — Neo-Industrial Studio
+   Skill: frontend-design / canvas-design
+   Theme: Music producer's workspace
+   Palette: Matte black + Amber + Cyan
+   Type: IBM Plex Mono (system) + Dela Gothic (display)
+══════════════════════════════════════════ */
+:root {
+  /* Core */
+  --ink:       #0b0b0e;
+  --ink1:      #111116;
+  --ink2:      #18181f;
+  --ink3:      #202028;
+  --wire:      #2a2a36;
+  --wire2:     #363644;
+  --dust:      #4a4a60;
+  --mist:      #7a7a96;
+  --fog:       #a8a8c0;
+  --light:     #e4e4f0;
+
+  /* Accent — Amber (warm signal) */
+  --am:        #f0a800;
+  --am-dim:    rgba(240,168,0,.15);
+  --am-glow:   rgba(240,168,0,.08);
+
+  /* Accent — Cyan (output/live) */
+  --cy:        #00d4c8;
+  --cy-dim:    rgba(0,212,200,.12);
+  --cy-glow:   rgba(0,212,200,.06);
+
+  /* Accent — Rose (alert/highlight) */
+  --ro:        #ff4466;
+  --ro-dim:    rgba(255,68,102,.12);
+
+  /* Type */
+  --mono:      'IBM Plex Mono', monospace;
+  --jp:        'Noto Sans JP', sans-serif;
+
+  /* Space */
+  --gap:       1px;        /* hairline border */
+  --r:         4px;
+  --r2:        8px;
+
+  /* Safe area */
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; background:var(--ink); color:var(--light); overflow:hidden; }
+body { font-family:var(--mono); display:flex; flex-direction:column; }
+
+/* ── Hairline texture overlay ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,.012) 3px, rgba(255,255,255,.012) 4px);
+  pointer-events:none; z-index:0;
+}
+
+/* ══════════════ HEADER ══════════════ */
+.hd {
+  position:relative; z-index:10;
+  height:48px;
+  background:var(--ink1);
+  border-bottom:var(--gap) solid var(--wire);
+  display:flex; align-items:stretch;
+  flex-shrink:0;
+}
+.hd-logo {
+  display:flex; align-items:center; gap:10px;
+  padding:0 18px;
+  border-right:var(--gap) solid var(--wire);
+}
+.hd-logotype {
+  font-family:'Dela Gothic One', cursive;
+  font-size:13px; letter-spacing:5px;
+  color:var(--am);
+  text-transform:uppercase;
+}
+.hd-ver {
+  font-size:9px; letter-spacing:2px;
+  color:var(--dust);
+  padding:2px 6px;
+  border:var(--gap) solid var(--wire2);
+  border-radius:2px;
+}
+.hd-center {
+  flex:1; display:flex; align-items:center;
+  padding:0 16px; gap:16px;
+}
+.hd-status {
+  font-size:9px; letter-spacing:2px; color:var(--dust);
+  display:flex; align-items:center; gap:6px;
+}
+.hd-status::before {
+  content:''; width:5px; height:5px; border-radius:50%;
+  background:var(--cy); box-shadow:0 0 6px var(--cy);
+}
+.hd-right {
+  display:flex; align-items:center; gap:0;
+  padding:0 14px;
+  border-left:var(--gap) solid var(--wire);
+}
+.hd-credit {
+  font-size:8px; color:var(--dust); letter-spacing:1px;
+  text-align:right; line-height:1.6;
+}
+.hd-credit em { color:var(--mist); font-style:normal; }
+
+/* ══════════════ LAYOUT ══════════════ */
+.app { display:grid; grid-template-columns:320px 1fr; flex:1; overflow:hidden; position:relative; z-index:1; }
+
+/* ── LEFT PANEL ── */
+.panel {
+  background:var(--ink1);
+  border-right:var(--gap) solid var(--wire);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.panel-scroll { flex:1; overflow-y:auto; }
+.panel-scroll::-webkit-scrollbar { width:2px; }
+.panel-scroll::-webkit-scrollbar-thumb { background:var(--wire2); }
+
+/* Section */
+.sec { border-bottom:var(--gap) solid var(--wire); }
+.sec-head {
+  height:32px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 14px;
+  background:var(--ink2);
+  border-bottom:var(--gap) solid var(--wire);
+}
+.sec-label {
+  font-size:8.5px; letter-spacing:3px; color:var(--mist);
+  text-transform:uppercase;
+}
+.sec-badge {
+  font-size:8px; color:var(--mist);  /* --dust(#4a4a60)→--mist(#7a7a96): 2.05→4.25:1 ✅ */
+  padding:1px 5px; border:var(--gap) solid var(--wire2); border-radius:2px;
+}
+.sec-body { padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+
+/* ── GRID BUTTONS ── */
+.g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:3px; }
+.g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
+
+.btn-tile {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; min-height:48px; padding:6px 3px;  /* 48px: WCAG 2.5.5 touch target */
+  background:var(--ink2); border:var(--gap) solid var(--wire);
+  cursor:pointer; transition:all .1s; text-align:center;
+  font-family:var(--jp);
+  border-radius:var(--r);
+  -webkit-user-select:none; user-select:none;
+}
+/* ico: 絵文字を明示的に明るくする（暗背景での system emoji 黒アウトライン対策） */
+.btn-tile .ico { font-size:14px; line-height:1; color:var(--fog); filter:brightness(1.15); }
+/* lbl: --dust(#4a4a60) on --ink2(#18181f) = 2.05:1 → NG
+         --mist(#7a7a96) on --ink2(#18181f) = 4.25:1 → OK (WCAG AA) */
+.btn-tile .lbl { font-size:7.5px; color:var(--mist); line-height:1.3; font-weight:600; letter-spacing:.5px; }
+/* sub: --wire2(#363644) on --ink2 = 1.5:1 → NG → --dust に引き上げ */
+.btn-tile .sub { font-size:6.5px; color:var(--dust); }
+.btn-tile:hover { border-color:var(--wire2); background:var(--ink3); }
+.btn-tile:hover .ico { color:var(--light); filter:brightness(1.2); }
+.btn-tile:hover .lbl { color:var(--fog); }
+
+/* genre */
+.btn-tile[data-g].on { border-color:var(--am); background:var(--am-glow); }
+.btn-tile[data-g].on .ico { color:var(--am); filter:none; }
+.btn-tile[data-g].on .lbl { color:var(--am); }
+/* layout / font */
+.btn-tile[data-l].on,
+.btn-tile[data-f].on { border-color:var(--cy); background:var(--cy-glow); }
+.btn-tile[data-l].on .ico,
+.btn-tile[data-f].on .ico { color:var(--cy); filter:none; }
+.btn-tile[data-l].on .lbl,
+.btn-tile[data-f].on .lbl { color:var(--cy); }
+/* deco */
+.btn-tile[data-d].on { border-color:var(--ro); background:var(--ro-dim); }
+.btn-tile[data-d].on .ico { color:var(--ro); filter:none; }
+.btn-tile[data-d].on .lbl { color:var(--ro); }
+/* VHS special: rgba透明度で落とすとコントラスト不足 → 実値に変更 */
+.btn-tile.vhs-btn { border-color:rgba(240,168,0,.3); }
+.btn-tile.vhs-btn .ico { color:var(--am); filter:none; }
+.btn-tile.vhs-btn .lbl { color:var(--am); opacity:.85; }  /* #f0a800 on #18181f = 8.1:1 ✅ */
+.btn-tile.vhs-btn.on { border-color:var(--am); background:var(--am-glow); }
+.btn-tile.vhs-btn.on .lbl { opacity:1; }
+
+/* focus-visible: スキル Section 3-5 準拠 */
+.btn-tile:focus-visible { outline:2px solid var(--cy); outline-offset:2px; }
+.btn-tile.vhs-btn.on .lbl { color:var(--am); }
+
+/* ── SLIDER ROW ── */
+.ctrl-row { display:flex; align-items:center; gap:8px; }
+.ctrl-lbl { font-size:8.5px; color:var(--mist); min-width:56px; letter-spacing:.5px; }  /* 4.25:1 ✅ */
+.ctrl-val { font-size:8.5px; color:var(--cy); min-width:30px; text-align:right; font-family:var(--mono); }
+input[type=range] {
+  flex:1; -webkit-appearance:none; height:2px;
+  background:var(--wire); border-radius:1px; outline:none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:14px; height:14px;
+  background:var(--cy); border-radius:50%; cursor:pointer;
+  box-shadow:0 0 8px var(--cy);
+}
+
+/* ── TOGGLE ── */
+.tog-row { display:flex; align-items:center; justify-content:space-between; padding:0 2px; }
+.tog-lbl { font-size:8.5px; color:var(--dust); letter-spacing:.5px; }
+.tog { position:relative; width:32px; height:17px; flex-shrink:0; }
+.tog input { display:none; }
+.tog-track { position:absolute; inset:0; background:var(--wire); border-radius:9px; cursor:pointer; transition:.2s; }
+.tog-track::before { content:''; position:absolute; width:11px; height:11px; background:var(--fog); border-radius:50%; top:3px; left:3px; transition:.2s; }
+.tog input:checked + .tog-track { background:var(--cy); }
+.tog input:checked + .tog-track::before { transform:translateX(15px); background:#fff; }
+.tog.am input:checked + .tog-track { background:var(--am); }
+
+/* ── DECO HEADER ── */
+.deco-hd { display:flex; align-items:center; justify-content:space-between; }
+.deco-wrap { transition:opacity .2s; }
+.deco-wrap.off { opacity:.2; pointer-events:none; }
+
+/* ── COLOR SWATCH ── */
+.col-row { display:flex; align-items:center; gap:6px; }
+.swatch { width:22px; height:22px; border-radius:3px; border:var(--gap) solid var(--wire2); cursor:pointer; position:relative; overflow:hidden; flex-shrink:0; }
+.swatch input[type=color] { position:absolute; inset:-4px; width:160%; height:160%; border:none; opacity:0; cursor:pointer; }
+.swatch .sw-fill { position:absolute; inset:0; border-radius:2px; }
+.col-hex { font-size:9px; color:var(--dust); font-family:var(--mono); }
+#colorRows, #m-colorRows { display:none; flex-direction:column; gap:6px; }
+
+/* ── TEXTAREA ── */
+textarea {
+  width:100%; background:var(--ink2);
+  border:var(--gap) solid var(--wire); border-radius:var(--r);
+  color:var(--light); font-family:var(--jp); font-size:13px;
+  line-height:1.9; padding:10px 12px;
+  resize:none; outline:none; min-height:110px;
+  transition:border-color .15s; -webkit-appearance:none;
+}
+textarea:focus { border-color:var(--wire2); }
+textarea::placeholder { color:var(--dust); font-size:11px; }
+
+/* ── GENERATE BUTTON ── */
+.gen-btn {
+  height:44px; background:var(--am); border:none; cursor:pointer;
+  color:var(--ink); font-family:'Dela Gothic One', cursive;
+  font-size:12px; letter-spacing:5px;
+  transition:all .15s; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  border-top:var(--gap) solid var(--wire);
+}
+.gen-btn:hover { background:color-mix(in srgb, var(--am) 85%, white); }
+.gen-btn:active { background:color-mix(in srgb, var(--am) 70%, black); }
+.gen-btn .dot { width:6px; height:6px; border-radius:50%; background:var(--ink); opacity:.5; }
+
+/* ── MEMORY ── */
+.mem-list { display:flex; flex-direction:column; gap:3px; }
+.mem-item {
+  display:flex; align-items:center; gap:6px;
+  padding:7px 8px; background:var(--ink2);
+  border:var(--gap) solid var(--wire); border-radius:var(--r);
+  cursor:pointer; transition:border-color .1s;
+}
+.mem-item:hover { border-color:var(--wire2); }
+.mem-item:hover .mem-name { color:var(--light); }
+.mem-name { flex:1; font-size:9px; color:var(--fog); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--mono); }
+.mem-tag { font-size:8px; color:var(--dust); flex-shrink:0; font-family:var(--mono); }
+.mem-del { width:20px; height:20px; background:none; border:var(--gap) solid var(--wire); border-radius:2px; color:var(--dust); font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .1s; }
+.mem-del:hover { background:var(--ro); border-color:var(--ro); color:#fff; }
+.mem-empty { font-size:9px; color:var(--dust); text-align:center; padding:8px 0; font-family:var(--mono); }
+.mem-save-row { display:flex; gap:4px; margin-top:6px; }
+.mem-input { flex:1; background:var(--ink2); border:var(--gap) solid var(--wire); border-radius:var(--r); color:var(--light); font-family:var(--mono); font-size:10px; padding:6px 8px; outline:none; min-width:0; }
+.mem-input:focus { border-color:var(--wire2); }
+.mem-input::placeholder { color:var(--dust); }
+.mem-save-btn { padding:6px 10px; background:var(--am-dim); border:var(--gap) solid var(--am); color:var(--am); font-family:var(--mono); font-size:9px; border-radius:var(--r); cursor:pointer; white-space:nowrap; letter-spacing:1px; transition:all .1s; }
+.mem-save-btn:hover { background:var(--am); color:var(--ink); }
+
+/* ══════════════ RIGHT PANEL ══════════════ */
+.stage {
+  background:var(--ink); overflow-y:auto; padding:16px;
+  display:flex; flex-direction:column; gap:12px;
+}
+.stage::-webkit-scrollbar { width:2px; }
+.stage::-webkit-scrollbar-thumb { background:var(--wire); }
+
+.stage-head { display:flex; align-items:center; justify-content:space-between; }
+.stage-label { font-size:9px; letter-spacing:3px; color:var(--mist); display:flex; align-items:center; gap:8px; }  /* 4.25:1 ✅ */
+.count-pill { font-size:8px; padding:2px 6px; border:var(--gap) solid var(--cy); color:var(--cy); border-radius:2px; display:none; }
+.dl-all-btn { font-size:9px; padding:5px 10px; background:var(--ink2); border:var(--gap) solid var(--wire); color:var(--mist); cursor:pointer; border-radius:var(--r); font-family:var(--mono); transition:all .1s; display:none; letter-spacing:1px; }
+.dl-all-btn:hover { border-color:var(--cy); color:var(--cy); }
+.dl-all-btn.show { display:block; }
+
+/* ── OUTPUT GRID ── */
+.out-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:8px; }
+
+.out-card {
+  background:var(--ink1); border:var(--gap) solid var(--wire);
+  border-radius:var(--r2); overflow:hidden;
+  cursor:pointer; transition:border-color .15s, transform .15s;
+  position:relative;
+}
+.out-card:hover { border-color:var(--am); transform:translateY(-2px); }
+
+.card-thumb {
+  width:100%; aspect-ratio:9/16;
+  background:repeating-conic-gradient(#111 0% 25%,#0d0d0d 0% 50%) 0 0/10px 10px;
+  position:relative; overflow:hidden;
+}
+.card-thumb canvas { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+
+/* zoom hint */
+.card-zoom {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.0); transition:background .15s;
+  pointer-events:none;
+}
+.out-card:hover .card-zoom { background:rgba(0,0,0,.35); }
+.zoom-icon { font-size:22px; opacity:0; transform:scale(.8); transition:all .15s; }
+.out-card:hover .zoom-icon { opacity:1; transform:scale(1); }
+
+.card-foot { padding:6px 8px; display:flex; align-items:center; justify-content:space-between; gap:4px; border-top:var(--gap) solid var(--wire); }
+.card-txt { font-size:9px; color:var(--dust); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; font-family:var(--mono); }
+.card-dl { padding:4px 7px; background:var(--ink2); border:var(--gap) solid var(--wire); color:var(--light); font-family:var(--mono); font-size:9px; cursor:pointer; border-radius:3px; transition:all .1s; white-space:nowrap; }
+.card-dl:hover, .card-dl:active { background:var(--cy); border-color:var(--cy); color:var(--ink); }
+
+/* empty state */
+.empty { grid-column:1/-1; text-align:center; padding:60px 20px; }
+.empty-ico { font-size:40px; opacity:.12; margin-bottom:14px; }
+.empty-txt { font-size:10px; color:var(--dust); line-height:2.2; letter-spacing:1px; }
+
+/* ══════════════ PREVIEW MODAL ══════════════ */
+.pv-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:200; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(12px); cursor:pointer; }
+.pv-bg.open { display:flex; }
+.pv-wrap { position:relative; max-height:90dvh; aspect-ratio:9/16; border-radius:var(--r2); overflow:hidden; box-shadow:0 0 0 var(--gap) var(--wire), 0 24px 64px rgba(0,0,0,.9); cursor:default; }
+.pv-wrap canvas { width:100%; height:100%; display:block; }
+.pv-close { position:absolute; top:10px; right:10px; width:32px; height:32px; background:rgba(11,11,14,.8); border:var(--gap) solid var(--wire2); border-radius:50%; color:var(--fog); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.pv-close:hover { background:var(--ro); border-color:var(--ro); color:#fff; }
+.pv-bar { position:absolute; bottom:0; left:0; right:0; padding:16px; background:linear-gradient(transparent,rgba(0,0,0,.85)); display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+.pv-lyric { color:#fff; font-family:var(--jp); font-size:12px; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pv-dl { padding:7px 12px; background:var(--am); border:none; border-radius:var(--r); color:var(--ink); font-family:var(--mono); font-size:9px; cursor:pointer; white-space:nowrap; letter-spacing:1px; transition:all .15s; }
+.pv-dl:hover { background:color-mix(in srgb,var(--am) 80%,white); }
+
+/* ══════════════ MOBILE ══════════════ */
+.mob-nav,.mob-panel,.mob-gen-bar,.mob-sheet-bg,.mob-sheet { display:none; }
+
+@media (max-width:767px) {
+  html, body { height:100dvh; }
+  .app { display:flex; flex-direction:column; overflow:hidden; }
+  .panel, .stage { display:none; }
+
+  /* Nav tabs */
+  .mob-nav { display:flex; background:var(--ink1); border-bottom:var(--gap) solid var(--wire); flex-shrink:0; }
+  /* m-tab default: --dust(#4a4a60) on --ink1(#111116) = 2.19:1 NG → --mist(4.53:1) ✅ */
+  .m-tab { flex:1; padding:11px 4px 9px; background:none; border:none; color:var(--mist); font-family:var(--mono); font-size:8px; letter-spacing:.5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; transition:color .12s; position:relative; }
+  .m-tab .t-ico { font-size:16px; line-height:1; color:var(--fog); filter:brightness(1.1); }  /* emoji可視性担保 */
+  .m-tab .t-lbl { font-size:8px; }
+  .m-tab::after { content:''; position:absolute; bottom:0; left:50%; width:0; height:1px; background:var(--am); transform:translateX(-50%); transition:width .2s; }
+  .m-tab.on { color:var(--am); }
+  .m-tab.on .t-ico { color:var(--am); filter:none; }
+  .m-tab.on::after { width:50%; }
+  .m-tab:focus-visible { outline:2px solid var(--cy); outline-offset:-2px; }
+
+  .mob-panel { display:flex; flex:1; overflow:hidden; min-height:0; position:relative; }
+  .m-pane { position:absolute; inset:0; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; opacity:0; pointer-events:none; transition:opacity .12s; -webkit-overflow-scrolling:touch; }
+  .m-pane.on { opacity:1; pointer-events:auto; }
+  .m-pane::-webkit-scrollbar { width:2px; }
+  .m-pane::-webkit-scrollbar-thumb { background:var(--wire); }
+
+  .mob-gen-bar { display:flex; gap:8px; padding:9px 12px calc(9px + var(--sab)); background:var(--ink1); border-top:var(--gap) solid var(--wire); flex-shrink:0; }
+  .mob-gen { flex:1; height:44px; background:var(--am); border:none; cursor:pointer; color:var(--ink); font-family:'Dela Gothic One',cursive; font-size:12px; letter-spacing:4px; border-radius:var(--r); transition:all .15s; }  /* 44px touch target ✅ */
+  .mob-gen:active { transform:scale(.97); }
+  /* mob-out-btn: --dust NG → --mist ✅ */
+  .mob-out-btn { padding:0 14px; height:44px; background:var(--ink2); border:var(--gap) solid var(--wire2); color:var(--mist); font-family:var(--mono); font-size:9px; cursor:pointer; border-radius:var(--r); white-space:nowrap; position:relative; transition:all .15s; letter-spacing:1px; }
+  .mob-out-btn.live { border-color:var(--cy); color:var(--cy); }
+  .mob-out-badge { position:absolute; top:-5px; right:-5px; width:16px; height:16px; background:var(--am); color:var(--ink); font-size:8px; font-weight:700; border-radius:50%; display:none; align-items:center; justify-content:center; font-family:var(--mono); }
+  .mob-out-btn.live .mob-out-badge { display:flex; }
+
+  /* Sheet */
+  .mob-sheet-bg { display:block; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; opacity:0; pointer-events:none; transition:opacity .2s; }
+  .mob-sheet-bg.open { opacity:1; pointer-events:auto; }
+  .mob-sheet { display:flex; flex-direction:column; position:fixed; left:0; right:0; bottom:0; height:88dvh; background:var(--ink1); border-top:var(--gap) solid var(--wire2); border-radius:12px 12px 0 0; z-index:101; transform:translateY(100%); transition:transform .28s cubic-bezier(.32,.72,0,1); overflow:hidden; }
+  .mob-sheet.open { transform:none; }
+  .mob-sheet-pull { width:32px; height:3px; background:var(--wire2); border-radius:2px; margin:10px auto; flex-shrink:0; }
+  .mob-sheet-head { padding:8px 14px 8px; display:flex; align-items:center; justify-content:space-between; border-bottom:var(--gap) solid var(--wire); flex-shrink:0; }
+  /* シートタイトルは装飾的テキストなので --mist で問題なし（4.53:1 on --ink1） */
+  .mob-sheet-title { font-size:9px; letter-spacing:3px; color:var(--mist); font-family:var(--mono); }
+  /* クローズボタン：インタラクティブ → --mist に */
+  .mob-sheet-close { width:32px; height:32px; background:var(--ink2); border:var(--gap) solid var(--wire2); color:var(--mist); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:var(--r); transition:all .1s; }
+  .mob-sheet-close:hover { background:var(--ro); border-color:var(--ro); color:#fff; }
+  /* DL ALL：ボタンラベル → --mist */
+  .mob-dl-all { margin:8px 12px; padding:10px; background:var(--ink2); border:var(--gap) solid var(--wire2); color:var(--mist); font-family:var(--mono); font-size:9px; cursor:pointer; border-radius:var(--r); text-align:center; display:none; letter-spacing:1px; transition:all .1s; }
+  .mob-dl-all.show { display:block; }
+  .mob-dl-all:active { background:var(--cy); border-color:var(--cy); color:var(--ink); }
+  .mob-sheet-scroll { flex:1; overflow-y:auto; padding:8px 12px; -webkit-overflow-scrolling:touch; }
+  .mob-sheet-scroll::-webkit-scrollbar { width:2px; }
+  .mob-sheet-scroll::-webkit-scrollbar-thumb { background:var(--wire); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="hd">
+  <div class="hd-logo">
+    <span class="hd-logotype">Lyric Gen</span>
+    <span class="hd-ver">v0.2</span>
+  </div>
+  <div class="hd-center">
+    <span class="hd-status">READY</span>
+  </div>
+  <div class="hd-right">
+    <div class="hd-credit">制作 <em>伊澄アキ</em><br>Powered by <em>Claude / Anthropic</em></div>
+  </div>
+</header>
+
+<!-- ══════════ PC LAYOUT ══════════ -->
+<div class="app">
+
+<!-- LEFT -->
+<div class="panel">
+  <div class="panel-scroll" id="pc-scroll">
+
+    <!-- ジャンル -->
+    <div class="sec">
+      <div class="sec-head"><span class="sec-label">Genre</span><span class="sec-badge">×8</span></div>
+      <div class="sec-body">
+        <div class="g4" id="genreGrid">
+          <button class="btn-tile on" data-g="rock"><span class="ico">🎸</span><span class="lbl">ROCK</span></button>
+          <button class="btn-tile" data-g="pop"><span class="ico">🌸</span><span class="lbl">POP</span></button>
+          <button class="btn-tile" data-g="digital"><span class="ico">🤖</span><span class="lbl">DIGITAL</span></button>
+          <button class="btn-tile" data-g="jazz"><span class="ico">🎷</span><span class="lbl">JAZZ</span></button>
+          <button class="btn-tile" data-g="anime"><span class="ico">✨</span><span class="lbl">ANIME</span></button>
+          <button class="btn-tile" data-g="lofi"><span class="ico">🌙</span><span class="lbl">LO-FI</span></button>
+          <button class="btn-tile" data-g="hiphop"><span class="ico">🎤</span><span class="lbl">HIP HOP</span></button>
+          <button class="btn-tile" data-g="ballad"><span class="ico">🕯️</span><span class="lbl">BALLAD</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- フォント -->
+    <div class="sec">
+      <div class="sec-head"><span class="sec-label">Typeface</span><span class="sec-badge">全漢字対応</span></div>
+      <div class="sec-body">
+        <div class="g3" id="fontGrid">
+          <button class="btn-tile on" data-f="auto"><span class="ico">🎲</span><span class="lbl">AUTO</span></button>
+          <button class="btn-tile" data-f="dela"><span class="ico" style="font-family:'Dela Gothic One'">亜</span><span class="lbl">DELA</span></button>
+          <button class="btn-tile" data-f="mplus"><span class="ico" style="font-family:'M PLUS 1';font-weight:900">亜</span><span class="lbl">M+1</span></button>
+          <button class="btn-tile" data-f="zen"><span class="ico" style="font-family:'Zen Kaku Gothic New';font-weight:900">亜</span><span class="lbl">ZEN</span></button>
+          <button class="btn-tile" data-f="biz"><span class="ico" style="font-family:'BIZ UDPGothic';font-weight:700">亜</span><span class="lbl">BIZ UD</span></button>
+          <button class="btn-tile" data-f="shippori"><span class="ico" style="font-family:'Shippori Mincho B1';font-weight:800">亜</span><span class="lbl">しっぽり</span></button>
+          <button class="btn-tile" data-f="klee"><span class="ico" style="font-family:'Klee One'">亜</span><span class="lbl">クレー</span></button>
+          <button class="btn-tile" data-f="rocknroll"><span class="ico" style="font-family:'RocknRoll One'">亜</span><span class="lbl">RnR</span></button>
+          <button class="btn-tile" data-f="yomogi"><span class="ico" style="font-family:'Yomogi'">亜</span><span class="lbl">よもぎ</span></button>
+          <button class="btn-tile" data-f="dot16"><span class="ico" style="font-family:'DotGothic16'">亜</span><span class="lbl">DOT<span class="sub"> GAME</span></span></button>
+          <button class="btn-tile" data-f="mcode"><span class="ico" style="font-family:'M PLUS 1 Code';font-weight:700">亜</span><span class="lbl">CODE<span class="sub"> MONO</span></span></button>
+          <button class="btn-tile" data-f="grunge"><span class="ico" style="font-family:'Yusei Magic'">亜</span><span class="lbl">GRUNGE<span class="sub"> かすれ</span></span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- レイアウト -->
+    <div class="sec">
+      <div class="sec-head"><span class="sec-label">Layout</span><span class="sec-badge">×8</span></div>
+      <div class="sec-body">
+        <div class="g4" id="layoutGrid">
+          <button class="btn-tile on" data-l="center"><span class="ico">⬛</span><span class="lbl">CENTER</span></button>
+          <button class="btn-tile" data-l="left_stack"><span class="ico">◀</span><span class="lbl">L-STACK</span></button>
+          <button class="btn-tile" data-l="billboard"><span class="ico">🅱</span><span class="lbl">BOARD</span></button>
+          <button class="btn-tile" data-l="diagonal"><span class="ico">↗</span><span class="lbl">DIAG</span></button>
+          <button class="btn-tile" data-l="split"><span class="ico">╌</span><span class="lbl">SPLIT</span></button>
+          <button class="btn-tile" data-l="vertical"><span class="ico">↕</span><span class="lbl">VERT</span></button>
+          <button class="btn-tile" data-l="frame"><span class="ico">▢</span><span class="lbl">FRAME</span></button>
+          <button class="btn-tile" data-l="corner"><span class="ico">◸</span><span class="lbl">CORNER</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 背景装飾 -->
+    <div class="sec">
+      <div class="sec-head">
+        <span class="sec-label">Decoration</span>
+        <div class="deco-hd" style="gap:8px">
+          <span class="sec-badge" id="decoStateLabel">ON</span>
+          <label class="tog am"><input type="checkbox" id="decoOn" checked onchange="syncToggle('decoOn','m-decoOn',updateDecoState)"><div class="tog-track"></div></label>
+        </div>
+      </div>
+      <div class="sec-body" style="padding-top:8px">
+        <div class="deco-wrap" id="decoWrap">
+          <div class="g3" id="decoGrid">
+            <button class="btn-tile on" data-d="auto"><span class="ico">🎲</span><span class="lbl">AUTO</span></button>
+            <button class="btn-tile" data-d="noise"><span class="ico">📡</span><span class="lbl">NOISE</span></button>
+            <button class="btn-tile" data-d="grid"><span class="ico">#</span><span class="lbl">GRID</span></button>
+            <button class="btn-tile" data-d="dots_scatter"><span class="ico">·̣·</span><span class="lbl">DOTS</span></button>
+            <button class="btn-tile" data-d="halftone"><span class="ico">◔</span><span class="lbl">HALF</span></button>
+            <button class="btn-tile" data-d="scanline"><span class="ico">≡</span><span class="lbl">SCAN</span></button>
+            <button class="btn-tile" data-d="diagonal_lines"><span class="ico">////</span><span class="lbl">DIAG</span></button>
+            <button class="btn-tile" data-d="crack"><span class="ico">⚡</span><span class="lbl">CRACK</span></button>
+            <button class="btn-tile" data-d="circle_burst"><span class="ico">◎</span><span class="lbl">CIRCLE</span></button>
+            <button class="btn-tile" data-d="wave"><span class="ico">〜</span><span class="lbl">WAVE</span></button>
+            <button class="btn-tile" data-d="star_burst"><span class="ico">✦</span><span class="lbl">STAR</span></button>
+            <button class="btn-tile" data-d="paint_splatter"><span class="ico">💧</span><span class="lbl">PAINT</span></button>
+            <button class="btn-tile" data-d="cross_hatch"><span class="ico">╬</span><span class="lbl">HATCH</span></button>
+            <button class="btn-tile" data-d="neon_lines"><span class="ico">🌈</span><span class="lbl">NEON</span></button>
+            <button class="btn-tile" data-d="vignette"><span class="ico">⬤</span><span class="lbl">VIGNETTE</span></button>
+            <button class="btn-tile vhs-btn" data-d="vhs"><span class="ico">📼</span><span class="lbl">VHS</span></button>
+            <button class="btn-tile vhs-btn" data-d="vhs_glitch"><span class="ico">📼⚡</span><span class="lbl">GLITCH</span></button>
+            <button class="btn-tile vhs-btn" data-d="film_burn"><span class="ico">🎞️</span><span class="lbl">FILM</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- サイズ -->
+    <div class="sec">
+      <div class="sec-head"><span class="sec-label">Parameters</span></div>
+      <div class="sec-body">
+        <div class="ctrl-row"><span class="ctrl-lbl">SIZE</span><div style="flex:1;display:flex;align-items:center;gap:6px"><input type="range" id="sz" min="40" max="130" value="80" oninput="sv2('sz',this.value)"></div><span class="ctrl-val" id="szv">80px</span></div>
+        <div class="ctrl-row"><span class="ctrl-lbl">Y-POS</span><div style="flex:1;display:flex;align-items:center;gap:6px"><input type="range" id="yp" min="10" max="90" value="50" oninput="sv2('yp',this.value)"></div><span class="ctrl-val" id="ypv">50%</span></div>
+        <div class="ctrl-row"><span class="ctrl-lbl">GLOW</span><div style="flex:1;display:flex;align-items:center;gap:6px"><input type="range" id="gl" min="0" max="200" value="100" oninput="sv2('gl',this.value)"></div><span class="ctrl-val" id="glv">100%</span></div>
+      </div>
+    </div>
+
+    <!-- カラー -->
+    <div class="sec">
+      <div class="sec-head">
+        <span class="sec-label">Color</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="sec-badge" id="autoColorLabel">AUTO</span>
+          <label class="tog am"><input type="checkbox" id="autoC" checked onchange="syncToggle('autoC','m-autoC',updateColorState)"><div class="tog-track"></div></label>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div id="colorRows">
+          <div class="ctrl-row"><span class="ctrl-lbl">TEXT</span><div class="col-row"><div class="swatch"><div class="sw-fill" id="sw_t" style="background:#fff"></div><input type="color" id="pk_t" value="#ffffff" oninput="updC('t',this.value)"></div><span class="col-hex" id="hex_t">#fff</span></div></div>
+          <div class="ctrl-row"><span class="ctrl-lbl">GLOW</span><div class="col-row"><div class="swatch"><div class="sw-fill" id="sw_g" style="background:#7c6aff"></div><input type="color" id="pk_g" value="#7c6aff" oninput="updC('g',this.value)"></div><span class="col-hex" id="hex_g">#7c6aff</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- メモリ -->
+    <div class="sec">
+      <div class="sec-head"><span class="sec-label">Memory</span><span class="sec-badge">MAX 5</span></div>
+      <div class="sec-body">
+        <div id="memList" class="mem-list"><div class="mem-empty">— no presets saved —</div></div>
+        <div class="mem-save-row">
+          <input type="text" class="mem-input" id="memIn" placeholder="preset name..." maxlength="20">
+          <button class="mem-save-btn" onclick="saveMemory()">SAVE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 歌詞 -->
+    <div class="sec" style="border-bottom:none">
+      <div class="sec-head"><span class="sec-label">Lyrics</span><span class="sec-badge">1行 = 1PNG</span></div>
+      <div class="sec-body">
+        <textarea id="lyrics" placeholder="夜が明けていく&#10;君の声がする&#10;走り出せ今すぐに"></textarea>
+      </div>
+    </div>
+
+  </div><!-- /panel-scroll -->
+  <button class="gen-btn" onclick="generate()"><span class="dot"></span>GENERATE<span class="dot"></span></button>
+</div><!-- /panel -->
+
+<!-- RIGHT -->
+<div class="stage" id="stage">
+  <div class="stage-head">
+    <div class="stage-label">OUTPUT <span class="count-pill" id="countPill">0</span></div>
+    <button class="dl-all-btn" id="dlAllBtn" onclick="dlAll()">⬇ DL ALL</button>
+  </div>
+  <div class="out-grid" id="outGrid">
+    <div class="empty"><div class="empty-ico">🎵</div><div class="empty-txt">SET GENRE / FONT / LAYOUT<br>ENTER LYRICS<br>CLICK GENERATE<br><br>CLICK CARD TO PREVIEW</div></div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ══════════ MOBILE ══════════ -->
+<nav class="mob-nav">
+  <button class="m-tab on" data-tab="m-style"><span class="t-ico">🎵</span><span class="t-lbl">STYLE</span></button>
+  <button class="m-tab" data-tab="m-layout"><span class="t-ico">📐</span><span class="t-lbl">LAYOUT</span></button>
+  <button class="m-tab" data-tab="m-params"><span class="t-ico">⚙️</span><span class="t-lbl">PARAM</span></button>
+  <button class="m-tab" data-tab="m-mem"><span class="t-ico">💾</span><span class="t-lbl">MEM</span></button>
+  <button class="m-tab" data-tab="m-lyrics"><span class="t-ico">📝</span><span class="t-lbl">LYRICS</span></button>
+</nav>
+
+<div class="mob-panel">
+
+  <!-- STYLE -->
+  <div class="m-pane on" id="m-style">
+    <div class="sec-head"><span class="sec-label">Genre</span></div>
+    <div class="g4" id="m-genreGrid">
+      <button class="btn-tile on" data-g="rock"><span class="ico">🎸</span><span class="lbl">ROCK</span></button>
+      <button class="btn-tile" data-g="pop"><span class="ico">🌸</span><span class="lbl">POP</span></button>
+      <button class="btn-tile" data-g="digital"><span class="ico">🤖</span><span class="lbl">DIGITAL</span></button>
+      <button class="btn-tile" data-g="jazz"><span class="ico">🎷</span><span class="lbl">JAZZ</span></button>
+      <button class="btn-tile" data-g="anime"><span class="ico">✨</span><span class="lbl">ANIME</span></button>
+      <button class="btn-tile" data-g="lofi"><span class="ico">🌙</span><span class="lbl">LO-FI</span></button>
+      <button class="btn-tile" data-g="hiphop"><span class="ico">🎤</span><span class="lbl">HIP HOP</span></button>
+      <button class="btn-tile" data-g="ballad"><span class="ico">🕯️</span><span class="lbl">BALLAD</span></button>
+    </div>
+    <div class="sec-head" style="margin-top:4px"><span class="sec-label">Typeface</span></div>
+    <div class="g3" id="m-fontGrid">
+      <button class="btn-tile on" data-f="auto"><span class="ico">🎲</span><span class="lbl">AUTO</span></button>
+      <button class="btn-tile" data-f="dela"><span class="ico" style="font-family:'Dela Gothic One'">亜</span><span class="lbl">DELA</span></button>
+      <button class="btn-tile" data-f="mplus"><span class="ico" style="font-family:'M PLUS 1';font-weight:900">亜</span><span class="lbl">M+1</span></button>
+      <button class="btn-tile" data-f="zen"><span class="ico" style="font-family:'Zen Kaku Gothic New';font-weight:900">亜</span><span class="lbl">ZEN</span></button>
+      <button class="btn-tile" data-f="biz"><span class="ico" style="font-family:'BIZ UDPGothic';font-weight:700">亜</span><span class="lbl">BIZ UD</span></button>
+      <button class="btn-tile" data-f="shippori"><span class="ico" style="font-family:'Shippori Mincho B1';font-weight:800">亜</span><span class="lbl">しっぽり</span></button>
+      <button class="btn-tile" data-f="klee"><span class="ico" style="font-family:'Klee One'">亜</span><span class="lbl">クレー</span></button>
+      <button class="btn-tile" data-f="rocknroll"><span class="ico" style="font-family:'RocknRoll One'">亜</span><span class="lbl">RnR</span></button>
+      <button class="btn-tile" data-f="yomogi"><span class="ico" style="font-family:'Yomogi'">亜</span><span class="lbl">よもぎ</span></button>
+      <button class="btn-tile" data-f="dot16"><span class="ico" style="font-family:'DotGothic16'">亜</span><span class="lbl">DOT</span></button>
+      <button class="btn-tile" data-f="mcode"><span class="ico" style="font-family:'M PLUS 1 Code';font-weight:700">亜</span><span class="lbl">CODE</span></button>
+      <button class="btn-tile" data-f="grunge"><span class="ico" style="font-family:'Yusei Magic'">亜</span><span class="lbl">GRUNGE</span></button>
+    </div>
+    <div class="sec-head" style="margin-top:4px">
+      <span class="sec-label">Decoration</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label class="tog am"><input type="checkbox" id="m-decoOn" checked onchange="syncToggle('m-decoOn','decoOn',updateDecoState)"><div class="tog-track"></div></label>
+      </div>
+    </div>
+    <div class="deco-wrap" id="m-decoWrap">
+      <div class="g3" id="m-decoGrid">
+        <button class="btn-tile on" data-d="auto"><span class="ico">🎲</span><span class="lbl">AUTO</span></button>
+        <button class="btn-tile" data-d="noise"><span class="ico">📡</span><span class="lbl">NOISE</span></button>
+        <button class="btn-tile" data-d="grid"><span class="ico">#</span><span class="lbl">GRID</span></button>
+        <button class="btn-tile" data-d="dots_scatter"><span class="ico">·̣·</span><span class="lbl">DOTS</span></button>
+        <button class="btn-tile" data-d="halftone"><span class="ico">◔</span><span class="lbl">HALF</span></button>
+        <button class="btn-tile" data-d="scanline"><span class="ico">≡</span><span class="lbl">SCAN</span></button>
+        <button class="btn-tile" data-d="diagonal_lines"><span class="ico">////</span><span class="lbl">DIAG</span></button>
+        <button class="btn-tile" data-d="crack"><span class="ico">⚡</span><span class="lbl">CRACK</span></button>
+        <button class="btn-tile" data-d="circle_burst"><span class="ico">◎</span><span class="lbl">CIRCLE</span></button>
+        <button class="btn-tile" data-d="wave"><span class="ico">〜</span><span class="lbl">WAVE</span></button>
+        <button class="btn-tile" data-d="star_burst"><span class="ico">✦</span><span class="lbl">STAR</span></button>
+        <button class="btn-tile" data-d="paint_splatter"><span class="ico">💧</span><span class="lbl">PAINT</span></button>
+        <button class="btn-tile" data-d="cross_hatch"><span class="ico">╬</span><span class="lbl">HATCH</span></button>
+        <button class="btn-tile" data-d="neon_lines"><span class="ico">🌈</span><span class="lbl">NEON</span></button>
+        <button class="btn-tile" data-d="vignette"><span class="ico">⬤</span><span class="lbl">VIG</span></button>
+        <button class="btn-tile vhs-btn" data-d="vhs"><span class="ico">📼</span><span class="lbl">VHS</span></button>
+        <button class="btn-tile vhs-btn" data-d="vhs_glitch"><span class="ico">📼⚡</span><span class="lbl">GLITCH</span></button>
+        <button class="btn-tile vhs-btn" data-d="film_burn"><span class="ico">🎞️</span><span class="lbl">FILM</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="m-pane" id="m-layout">
+    <div class="sec-head"><span class="sec-label">Layout</span></div>
+    <div class="g4" id="m-layoutGrid">
+      <button class="btn-tile on" data-l="center"><span class="ico">⬛</span><span class="lbl">CENTER</span></button>
+      <button class="btn-tile" data-l="left_stack"><span class="ico">◀</span><span class="lbl">L-STACK</span></button>
+      <button class="btn-tile" data-l="billboard"><span class="ico">🅱</span><span class="lbl">BOARD</span></button>
+      <button class="btn-tile" data-l="diagonal"><span class="ico">↗</span><span class="lbl">DIAG</span></button>
+      <button class="btn-tile" data-l="split"><span class="ico">╌</span><span class="lbl">SPLIT</span></button>
+      <button class="btn-tile" data-l="vertical"><span class="ico">↕</span><span class="lbl">VERT</span></button>
+      <button class="btn-tile" data-l="frame"><span class="ico">▢</span><span class="lbl">FRAME</span></button>
+      <button class="btn-tile" data-l="corner"><span class="ico">◸</span><span class="lbl">CORNER</span></button>
+    </div>
+  </div>
+
+  <!-- PARAMS -->
+  <div class="m-pane" id="m-params">
+    <div class="sec-head"><span class="sec-label">Parameters</span></div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:12px 0">
+      <div class="ctrl-row"><span class="ctrl-lbl">SIZE</span><div style="flex:1;display:flex;align-items:center;gap:6px"><input type="range" id="m-sz" min="40" max="130" value="80" oninput="mSv2('sz',this.value)"></div><span class="ctrl-val" id="m-szv">80px</span></div>
+      <div class="ctrl-row"><span class="ctrl-lbl">Y-POS</span><div style="flex:1;display:flex;align-items:center;gap:6px"><input type="range" id="m-yp" min="10" max="90" value="50" oninput="mSv2('yp',this.value)"></div><span class="ctrl-val" id="m-ypv">50%</span></div>
+      <div class="ctrl-row"><span class="ctrl-lbl">GLOW</span><div style="flex:1;display:flex;align-items:center;gap:6px"><input type="range" id="m-gl" min="0" max="200" value="100" oninput="mSv2('gl',this.value)"></div><span class="ctrl-val" id="m-glv">100%</span></div>
+    </div>
+    <div class="sec-head" style="margin-top:4px">
+      <span class="sec-label">Color</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label class="tog am"><input type="checkbox" id="m-autoC" checked onchange="syncToggle('m-autoC','autoC',updateColorState)"><div class="tog-track"></div></label>
+      </div>
+    </div>
+    <div id="m-colorRows" style="display:none;flex-direction:column;gap:8px;padding:10px 0">
+      <div class="ctrl-row"><span class="ctrl-lbl">TEXT</span><div class="col-row"><div class="swatch"><div class="sw-fill" id="m-sw_t" style="background:#fff"></div><input type="color" id="m-pk_t" value="#ffffff" oninput="updCM('t',this.value)"></div><span class="col-hex" id="m-hex_t">#fff</span></div></div>
+      <div class="ctrl-row"><span class="ctrl-lbl">GLOW</span><div class="col-row"><div class="swatch"><div class="sw-fill" id="m-sw_g" style="background:#7c6aff"></div><input type="color" id="m-pk_g" value="#7c6aff" oninput="updCM('g',this.value)"></div><span class="col-hex" id="m-hex_g">#7c6aff</span></div></div>
+    </div>
+  </div>
+
+  <!-- MEMORY -->
+  <div class="m-pane" id="m-mem">
+    <div class="sec-head"><span class="sec-label">Memory</span><span class="sec-badge">MAX 5</span></div>
+    <div style="padding:10px 0">
+      <div id="m-memList" class="mem-list"><div class="mem-empty">— no presets saved —</div></div>
+      <div class="mem-save-row" style="margin-top:8px">
+        <input type="text" class="mem-input" id="m-memIn" placeholder="preset name..." maxlength="20">
+        <button class="mem-save-btn" onclick="saveMemory()">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LYRICS -->
+  <div class="m-pane" id="m-lyrics">
+    <div class="sec-head"><span class="sec-label">Lyrics</span><span class="sec-badge">1行 = 1PNG</span></div>
+    <div style="padding:10px 0">
+      <textarea id="m-lyrics-ta" placeholder="夜が明けていく&#10;君の声がする&#10;走り出せ今すぐに" style="min-height:200px"></textarea>
+    </div>
+  </div>
+
+</div><!-- /mob-panel -->
+
+<div class="mob-gen-bar">
+  <button class="mob-gen" onclick="generate()">▶ GENERATE</button>
+  <button class="mob-out-btn" id="mobOutBtn" onclick="openSheet()">OUTPUT<span class="mob-out-badge" id="mobBadge">0</span></button>
+</div>
+
+<div class="mob-sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
+<div class="mob-sheet" id="mobSheet">
+  <div class="mob-sheet-pull"></div>
+  <div class="mob-sheet-head">
+    <div class="mob-sheet-title">OUTPUT</div>
+    <button class="mob-sheet-close" onclick="closeSheet()">×</button>
+  </div>
+  <button class="mob-dl-all" id="mobDlAll" onclick="dlAll()">⬇ DOWNLOAD ALL</button>
+  <div class="mob-sheet-scroll">
+    <div class="out-grid" id="m-outGrid">
+      <div class="empty"><div class="empty-ico">🎵</div><div class="empty-txt">GENERATE FIRST</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="pv-bg" id="pvBg" onclick="closePv(event)">
+  <div class="pv-wrap" onclick="event.stopPropagation()">
+    <canvas id="pvCanvas"></canvas>
+    <button class="pv-close" onclick="closePv()">×</button>
+    <div class="pv-bar">
+      <span class="pv-lyric" id="pvLyric"></span>
+      <button class="pv-dl" id="pvDl">⬇ PNG</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════
+// FONT MAP
+// ══════════════════════════════════════════
+const FM={
+  dela:    {w:'900',f:'"Dela Gothic One","Noto Sans JP"'},
+  mplus:   {w:'900',f:'"M PLUS 1","Noto Sans JP"'},
+  zen:     {w:'900',f:'"Zen Kaku Gothic New","Noto Sans JP"'},
+  biz:     {w:'700',f:'"BIZ UDPGothic","Noto Sans JP"'},
+  shippori:{w:'800',f:'"Shippori Mincho B1","Noto Sans JP"'},
+  klee:    {w:'600',f:'"Klee One","Noto Sans JP"'},
+  rocknroll:{w:'400',f:'"RocknRoll One","Noto Sans JP"'},
+  yomogi:  {w:'400',f:'"Yomogi","Noto Sans JP"'},
+  dot16:   {w:'400',f:'"DotGothic16","Noto Sans JP"'},
+  mcode:   {w:'700',f:'"M PLUS 1 Code","Noto Sans JP"'},
+  grunge:  {w:'400',f:'"Yusei Magic","Noto Sans JP"', grunge:true},
+  noto:    {w:'900',f:'"Noto Sans JP"'},
+};
+const rFont=(gc,fo)=>(fo==='auto'||!FM[fo])?FM[gc.font]||FM.noto:FM[fo];
+
+// ══════════════════════════════════════════
+// GENRE CONFIG
+// ══════════════════════════════════════════
+const G={
+  rock:   {font:'dela',   tc:'#fff',gc:'#ff2200',gb:28,stroke:'#000',sw:7,grad:null,          tk:2, ac:'#ff3300',deco:'crack'},
+  pop:    {font:'rocknroll',tc:'#fff',gc:'#ff6ab0',gb:18,stroke:'#dd1177',sw:3,grad:['#fff','#ffe0f5'],tk:5,ac:'#ff6ab0',deco:'dots_scatter'},
+  digital:{font:'mplus',  tc:'#00ffcc',gc:'#00ffcc',gb:35,stroke:'#006644',sw:2,grad:['#00ffcc','#0088ff'],tk:9,ac:'#00ffcc',deco:'grid'},
+  jazz:   {font:'shippori',tc:'#f5e6c8',gc:'#d4a843',gb:12,stroke:'#7a5a15',sw:1,grad:['#f5e6c8','#d4a843'],tk:16,ac:'#d4a843',deco:'diagonal_lines'},
+  anime:  {font:'zen',    tc:'#fff',gc:'#44ddff',gb:22,stroke:'#0077aa',sw:5,grad:['#fff','#ccf4ff'],tk:3,ac:'#44ddff',deco:'star_burst'},
+  lofi:   {font:'klee',   tc:'#e8ddd0',gc:'#a89070',gb:8,stroke:'#6b5a4a',sw:1,grad:null,    tk:18,ac:'#a89070',deco:'noise'},
+  hiphop: {font:'dela',   tc:'#fff',gc:'#ffcc00',gb:18,stroke:'#000',sw:10,grad:['#fff','#ffe055'],tk:1,ac:'#ffcc00',deco:'halftone'},
+  ballad: {font:'shippori',tc:'#fff',gc:'#aabbff',gb:26,stroke:'#334499',sw:2,grad:['#fff','#c8d4ff'],tk:14,ac:'#aabbff',deco:'wave'},
+};
+
+// ══════════════════════════════════════════
+// DECORATIONS
+// ══════════════════════════════════════════
+const D={
+  noise(c,W,H,g){const id=c.createImageData(W,H);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*60;id.data[i]=v;id.data[i+1]=v;id.data[i+2]=v;id.data[i+3]=Math.random()*40;}c.putImageData(id,0,0);c.save();for(let i=0;i<120;i++){c.globalAlpha=0.08+Math.random()*0.15;c.fillStyle=g.ac;c.beginPath();c.arc(Math.random()*W,Math.random()*H,1+Math.random()*3,0,Math.PI*2);c.fill();}c.restore();},
+  grid(c,W,H,g){c.save();const s=80;c.globalAlpha=0.18;c.strokeStyle=g.ac;c.lineWidth=2;for(let x=0;x<W;x+=s){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke();}for(let y=0;y<H;y+=s){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}c.globalAlpha=0.35;c.fillStyle=g.ac;for(let x=0;x<W;x+=s)for(let y=0;y<H;y+=s){c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fill();}c.restore();},
+  dots_scatter(c,W,H,g){c.save();for(let i=0;i<80;i++){c.globalAlpha=0.12+Math.random()*0.2;c.fillStyle=g.ac;c.beginPath();c.arc(Math.random()*W,Math.random()*H,4+Math.random()*18,0,Math.PI*2);c.fill();}for(let i=0;i<150;i++){c.globalAlpha=0.08+Math.random()*0.12;c.fillStyle='#fff';c.beginPath();c.arc(Math.random()*W,Math.random()*H,1+Math.random()*3,0,Math.PI*2);c.fill();}c.restore();},
+  halftone(c,W,H,g){c.save();const s=52;for(let gy=s/2;gy<H;gy+=s)for(let gx=s/2;gx<W;gx+=s){const d=Math.hypot(gx-W/2,gy-H/2),r2=s*0.45*(0.2+d/Math.hypot(W/2,H/2)*0.8);c.globalAlpha=0.15;c.fillStyle=g.ac;c.beginPath();c.arc(gx,gy,r2,0,Math.PI*2);c.fill();}c.restore();},
+  scanline(c,W,H,g){c.save();for(let y=0;y<H;y+=8){c.globalAlpha=0.18;c.fillStyle='#000';c.fillRect(0,y,W,4);}for(let i=0;i<6;i++){const yo=Math.random()*H;c.globalAlpha=0.12;c.strokeStyle=g.ac;c.lineWidth=2;c.shadowColor=g.ac;c.shadowBlur=12;c.beginPath();c.moveTo(0,yo);c.lineTo(W,yo);c.stroke();}c.restore();},
+  diagonal_lines(c,W,H,g){c.save();c.strokeStyle=g.ac;for(let d=-H;d<W+H;d+=70){c.globalAlpha=0.14;c.lineWidth=3;c.beginPath();c.moveTo(d,0);c.lineTo(d+H,H);c.stroke();}for(let d=-H+35;d<W+H;d+=70){c.globalAlpha=0.07;c.lineWidth=1;c.beginPath();c.moveTo(d,0);c.lineTo(d+H,H);c.stroke();}c.restore();},
+  crack(c,W,H,g){c.save();c.strokeStyle=g.ac;c.lineJoin='round';for(let i=0;i<12;i++){c.globalAlpha=0.18+Math.random()*0.15;c.lineWidth=2+Math.random()*4;c.shadowColor=g.ac;c.shadowBlur=8;c.beginPath();let px=Math.random()*W,py=Math.random()*H;c.moveTo(px,py);for(let s=0;s<6;s++){px+=(-80+Math.random()*160);py+=(-120+Math.random()*240);c.lineTo(px,py);}c.stroke();}c.restore();},
+  circle_burst(c,W,H,g){c.save();for(let r=80;r<Math.max(W,H)*1.2;r+=110){c.globalAlpha=0.16;c.strokeStyle=g.ac;c.lineWidth=4;c.shadowColor=g.ac;c.shadowBlur=16;c.beginPath();c.arc(W/2,H/2,r,0,Math.PI*2);c.stroke();}c.restore();},
+  wave(c,W,H,g){c.save();for(let i=0;i<5;i++){c.globalAlpha=0.18-i*0.02;c.strokeStyle=g.ac;c.lineWidth=4-i*0.4;c.shadowColor=g.ac;c.shadowBlur=12;c.beginPath();const amp=100+i*50,fr=0.006-i*0.0008,yo=H*(0.15+i*0.17);for(let x=0;x<=W;x+=4)c.lineTo(x,yo+Math.sin(x*fr+i*0.8)*amp);c.stroke();}c.restore();},
+  star_burst(c,W,H,g){c.save();c.strokeStyle=g.ac;for(let a=0;a<360;a+=15){const r=a*Math.PI/180;c.globalAlpha=0.14;c.lineWidth=2;c.shadowColor=g.ac;c.shadowBlur=6;c.beginPath();c.moveTo(W/2,H/2);c.lineTo(W/2+Math.cos(r)*Math.max(W,H),H/2+Math.sin(r)*Math.max(W,H));c.stroke();}for(let i=0;i<40;i++){c.globalAlpha=0.15+Math.random()*0.2;c.fillStyle=i%3===0?'#fff':g.ac;c.shadowColor=g.ac;c.shadowBlur=10;c.beginPath();c.arc(Math.random()*W,Math.random()*H,3+Math.random()*8,0,Math.PI*2);c.fill();}c.restore();},
+  paint_splatter(c,W,H,g){c.save();for(let i=0;i<25;i++){const sx=Math.random()*W,sy=Math.random()*H,ra=20+Math.random()*60;c.globalAlpha=0.1+Math.random()*0.12;c.fillStyle=g.ac;c.beginPath();c.arc(sx,sy,ra,0,Math.PI*2);c.fill();for(let s=0;s<8;s++){const an=Math.random()*Math.PI*2,di=ra*0.6+Math.random()*ra*1.2,r2=4+Math.random()*14;c.globalAlpha=0.07+Math.random()*0.1;c.beginPath();c.arc(sx+Math.cos(an)*di,sy+Math.sin(an)*di,r2,0,Math.PI*2);c.fill();}}c.restore();},
+  cross_hatch(c,W,H,g){c.save();c.strokeStyle=g.ac;for(let d=-H;d<W+H;d+=70){c.globalAlpha=0.13;c.lineWidth=2.5;c.beginPath();c.moveTo(d,0);c.lineTo(d+H,H);c.stroke();c.beginPath();c.moveTo(d+H,0);c.lineTo(d,H);c.stroke();}c.restore();},
+  neon_lines(c,W,H,g){c.save();const cols=[g.ac,'#ff6ab0','#7c6aff','#00e5cc','#ffcc00'];for(let i=0;i<14;i++){const y0=Math.random()*H,y1=y0+(-120+Math.random()*240),col=cols[i%cols.length];c.globalAlpha=0.14+Math.random()*0.1;c.strokeStyle=col;c.lineWidth=3+Math.random()*4;c.shadowColor=col;c.shadowBlur=20;c.beginPath();c.moveTo(0,y0);c.lineTo(W,y1);c.stroke();c.globalAlpha=0.06;c.lineWidth=10+Math.random()*8;c.beginPath();c.moveTo(0,y0);c.lineTo(W,y1);c.stroke();}c.restore();},
+  vignette(c,W,H,g){c.save();const grd=c.createRadialGradient(W/2,H/2,H*0.15,W/2,H/2,H*0.9);grd.addColorStop(0,'rgba(0,0,0,0)');grd.addColorStop(0.5,'rgba(0,0,0,0.15)');grd.addColorStop(1,'rgba(0,0,0,0.7)');c.fillStyle=grd;c.fillRect(0,0,W,H);c.restore();},
+  vhs(c,W,H,g){
+    c.save();for(let y=0;y<H;y+=4){c.globalAlpha=0.22;c.fillStyle='#000';c.fillRect(0,y,W,2);}c.restore();
+    c.save();c.globalAlpha=0.06;c.fillStyle='#f00';for(let y=0;y<H;y+=2)c.fillRect(-18,y,W,1);c.globalAlpha=0.06;c.fillStyle='#00f';for(let y=0;y<H;y+=2)c.fillRect(18,y,W,1);c.restore();
+    c.save();for(let i=0;i<14;i++){const gy=Math.random()*H,gh=1+Math.random()*6,gs=-40+Math.random()*80;c.globalAlpha=0.08+Math.random()*0.1;c.fillStyle=`hsl(${Math.random()*360},80%,70%)`;c.fillRect(gs,gy,W,gh);}c.restore();
+    c.save();for(let i=0;i<300;i++){const nx=Math.random()*W,ny=Math.random()<0.5?Math.random()*H*0.12:H*0.88+Math.random()*H*0.12;c.globalAlpha=0.3+Math.random()*0.5;c.fillStyle='#fff';c.fillRect(nx,ny,2+Math.random()*8,1);}c.restore();
+    c.save();const tg=c.createLinearGradient(0,0,0,H*0.08);tg.addColorStop(0,'rgba(255,255,255,0.3)');tg.addColorStop(1,'rgba(0,0,0,0)');c.globalAlpha=0.12;c.fillStyle=tg;c.fillRect(0,0,W,H*0.08);c.restore();
+    c.save();const vg=c.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.9);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.55)');c.fillStyle=vg;c.fillRect(0,0,W,H);c.restore();
+  },
+  vhs_glitch(c,W,H,g){
+    D.vhs(c,W,H,g);
+    c.save();for(let i=0;i<22;i++){const by=Math.random()*H,bh=4+Math.random()*30,bx=-80+Math.random()*160;c.globalAlpha=0.55+Math.random()*0.3;try{const id=c.getImageData(0,Math.max(0,Math.round(by)),W,Math.max(1,Math.round(bh)));c.putImageData(id,bx,Math.max(0,Math.round(by)));}catch(e){}}c.globalAlpha=0.12;c.fillStyle='rgba(255,0,102,.5)';c.fillRect(-30,0,W,H);c.globalAlpha=0.12;c.fillStyle='rgba(0,255,255,.3)';c.fillRect(30,0,W,H);c.restore();
+    c.save();for(let i=0;i<80;i++){const nx=Math.random()*W,ny=Math.random()*H,nw=8+Math.random()*60,nh=2+Math.random()*8;c.globalAlpha=0.12+Math.random()*0.25;c.fillStyle=`hsl(${Math.random()*360},90%,65%)`;c.fillRect(nx,ny,nw,nh);}c.restore();
+  },
+  film_burn(c,W,H,g){
+    c.save();const t=c.createLinearGradient(0,0,0,H*0.15);t.addColorStop(0,'rgba(255,180,40,.28)');t.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=t;c.fillRect(0,0,W,H*0.15);const b=c.createLinearGradient(0,H*0.85,0,H);b.addColorStop(0,'rgba(0,0,0,0)');b.addColorStop(1,'rgba(255,120,20,.22)');c.fillStyle=b;c.fillRect(0,H*0.85,W,H*0.15);c.restore();
+    c.save();for(let i=0;i<20;i++){const sx=Math.random()*W,sh=H*0.3+Math.random()*H*0.7,sy=Math.random()*(H-sh);c.globalAlpha=0.12+Math.random()*0.25;c.strokeStyle=Math.random()<0.6?'#fff':'#000';c.lineWidth=0.5+Math.random()*1.5;c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+(-2+Math.random()*4),sy+sh);c.stroke();}c.restore();
+    c.save();for(let i=0;i<600;i++){const fx=Math.random()*W,fy=Math.random()*H;c.globalAlpha=0.04+Math.random()*0.1;c.fillStyle=Math.random()<0.5?'#fff':'#000';c.fillRect(fx,fy,1+Math.random()*2,1+Math.random()*2);}c.restore();
+    c.save();c.globalAlpha=0.15;c.fillStyle='#000';c.fillRect(0,0,30,H);c.fillRect(W-30,0,30,H);for(let y=40;y<H;y+=80){c.globalAlpha=0.3;c.fillStyle='#111';c.fillRect(6,y,18,36);c.fillRect(W-24,y,18,36);}c.restore();
+    c.save();for(let y=0;y<H;y+=3){c.globalAlpha=0.07;c.fillStyle='#000';c.fillRect(0,y,W,1);}c.restore();
+  },
+  auto(c,W,H,g){(D[g.deco]||D.noise)(c,W,H,g);}
+};
+
+// ══════════════════════════════════════════
+// CANVAS SIZE
+// ══════════════════════════════════════════
+const CW=1080,CH=1920;
+
+// ══════════════════════════════════════════
+// LAYOUTS
+// ══════════════════════════════════════════
+const L={
+  center:(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb)=>_dt(c,t,fd,gc,fs,W/2,H*(yp/100),tc,gc2,gb,'center'),
+  left_stack(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb){const ch=[...t],h=Math.ceil(ch.length/2),l1=ch.slice(0,h).join(''),l2=ch.slice(h).join(''),lh=fs*1.3,yb=H*(yp/100)-lh/2;_dt(c,l1,fd,gc,fs*.9,W*.1+fs*.3,yb,tc,gc2,gb*.8,'left');_dt(c,l2,fd,gc,fs*.72,W*.18+fs*.3,yb+lh,tc,gc2,gb,'left');},
+  billboard(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb){let f=fs;c.font=`${fd.w} ${f}px ${fd.f}`;const mw=W*.93;while(c.measureText(t).width>mw&&f>28){f-=2;c.font=`${fd.w} ${f}px ${fd.f}`;}const y=H*(yp/100);c.save();c.fillStyle=gc.ac+'18';c.fillRect(0,y-f*.95,W,f*1.9);c.restore();c.save();c.strokeStyle=gc.ac+'44';c.lineWidth=3;c.beginPath();c.moveTo(0,y-f*.95);c.lineTo(W,y-f*.95);c.stroke();c.beginPath();c.moveTo(0,y+f*.95);c.lineTo(W,y+f*.95);c.stroke();c.restore();_dt(c,t,fd,gc,f,W/2,y,tc,gc2,gb,'center');},
+  diagonal(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb){const y=H*(yp/100);c.save();c.translate(W/2,y);c.rotate(-Math.PI/18);_dt(c,t,fd,gc,fs,0,0,tc,gc2,gb,'center');c.strokeStyle=gc.ac+'88';c.lineWidth=3;c.beginPath();c.moveTo(-W*.42,fs*.88);c.lineTo(W*.42,fs*.88);c.stroke();c.restore();},
+  split(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb){const ch=[...t],sp=Math.ceil(ch.length/2),top=ch.slice(0,sp).join(''),bot=ch.slice(sp).join(''),yC=H*(yp/100),gap=fs*.18;c.save();c.strokeStyle=gc.ac+'55';c.lineWidth=2;c.beginPath();c.moveTo(W*.1,yC);c.lineTo(W*.9,yC);c.stroke();c.restore();_dt(c,top,fd,gc,fs*.62,W/2,yC-fs*.52-gap,tc,gc2,gb*.7,'center');_dt(c,bot,fd,gc,fs,W/2,yC+fs*.62+gap,tc,gc2,gb,'center');},
+  vertical(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb){const ch=[...t],ys=H*(yp/100)-(fs*(ch.length-1)*.55)/2;ch.forEach((c2,i)=>_dt(c,c2,fd,gc,fs,W/2,ys+i*fs*1.1,tc,gc2,gb,'center'));},
+  frame(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb){const y=H*(yp/100);c.font=`${fd.w} ${fs}px ${fd.f}`;c.textAlign='center';c.textBaseline='middle';const tw=c.measureText(t).width,px=52,py=30,rx=W/2-tw/2-px,ry=y-fs/2-py,rw=tw+px*2,rh=fs+py*2;c.save();c.strokeStyle=gc.ac+'bb';c.lineWidth=3;c.strokeRect(rx,ry,rw,rh);const cs=22;[[rx,ry],[rx+rw,ry],[rx,ry+rh],[rx+rw,ry+rh]].forEach(([cx,cy])=>{c.strokeStyle=gc.ac;c.lineWidth=6;c.beginPath();c.moveTo(cx+(cx<W/2?0:-cs),cy);c.lineTo(cx+(cx<W/2?cs:0),cy);c.moveTo(cx,cy+(cy<H/2?0:-cs));c.lineTo(cx,cy+(cy<H/2?cs:0));c.stroke();});c.restore();_dt(c,t,fd,gc,fs,W/2,y,tc,gc2,gb,'center');},
+  corner(c,W,H,t,fd,gc,fs,yp,tc,gc2,gb){const bf=fs*1.4,yC=H*.75,xC=W*.09;c.save();c.fillStyle=gc.ac+'14';c.fillRect(0,yC-bf,W*.65,bf*2);c.restore();c.save();c.strokeStyle=gc.ac;c.lineWidth=6;c.beginPath();c.moveTo(xC-8,yC-bf*.72);c.lineTo(xC-8,yC+bf*.72);c.stroke();c.restore();_dt(c,t,fd,gc,bf,xC+18,yC,tc,gc2,gb,'left');}
+};
+
+// ══════════════════════════════════════════
+// TEXT RENDER
+// ══════════════════════════════════════════
+function _dt(c,t,fd,gc,fs,x,y,tc,gc2,gb,al){
+  al=al||'center';
+  if(fd.grunge){_grunge(c,t,fd,gc,fs,x,y,tc,gc2,gb,al);return;}
+  c.font=`${fd.w} ${fs}px ${fd.f}`;c.textAlign=al;c.textBaseline='middle';
+  const tk=gc.tk||0;
+  for(let i=3;i>=1;i--){c.save();c.shadowColor=gc2;c.shadowBlur=gb*i;c.fillStyle=gc2;c.globalAlpha=0.1/i;_rc(c,t,fs,x,y,tk,al,false,gc);c.restore();}
+  if(gc.sw>0){c.save();c.shadowBlur=0;c.strokeStyle=gc.stroke;c.lineWidth=gc.sw*2;c.lineJoin='round';_rc(c,t,fs,x,y,tk,al,true,gc);c.restore();}
+  c.save();c.shadowColor=gc2;c.shadowBlur=gb;
+  if(gc.grad){const g=c.createLinearGradient(x-500,y-fs/2,x+500,y+fs/2);g.addColorStop(0,gc.grad[0]);g.addColorStop(1,gc.grad[1]);c.fillStyle=g;}else{c.fillStyle=tc;}
+  _rc(c,t,fs,x,y,tk,al,false,gc);c.restore();
+}
+function _grunge(c,t,fd,gc,fs,x,y,tc,gc2,gb,al){
+  const off=document.createElement('canvas');off.width=CW;off.height=CH;const oc=off.getContext('2d');
+  oc.font=`${fd.w} ${fs}px ${fd.f}`;oc.textAlign=al;oc.textBaseline='middle';const tk=gc.tk||0;
+  for(let i=3;i>=1;i--){oc.save();oc.shadowColor=gc2;oc.shadowBlur=gb*i;oc.fillStyle=gc2;oc.globalAlpha=0.08/i;_rc(oc,t,fs,x,y,tk,al,false,gc);oc.restore();}
+  if(gc.sw>0){oc.save();oc.shadowBlur=0;oc.strokeStyle=gc.stroke;oc.lineWidth=gc.sw*2;oc.lineJoin='round';_rc(oc,t,fs,x,y,tk,al,true,gc);oc.restore();}
+  oc.save();oc.shadowColor=gc2;oc.shadowBlur=gb;
+  if(gc.grad){const g=oc.createLinearGradient(x-500,y-fs/2,x+500,y+fs/2);g.addColorStop(0,gc.grad[0]);g.addColorStop(1,gc.grad[1]);oc.fillStyle=g;}else{oc.fillStyle=tc;}
+  _rc(oc,t,fs,x,y,tk,al,false,gc);oc.restore();
+  oc.save();oc.globalCompositeOperation='destination-out';
+  for(let ly=y-fs*1.1;ly<y+fs*1.1;ly+=3){if(Math.random()<0.38){oc.globalAlpha=0.2+Math.random()*0.45;oc.fillStyle='#000';oc.fillRect(x-fs*3+Math.random()*fs*1.5,ly,fs*0.4+Math.random()*fs*2,2);}}
+  for(let i=0;i<15;i++){oc.globalAlpha=0.1+Math.random()*0.3;oc.fillStyle='#000';oc.fillRect(x+(-fs*2.2+Math.random()*fs*4.4),y-fs*1.1+Math.random()*fs*2.2,2+Math.random()*3,fs*0.06+Math.random()*fs*0.28);}
+  oc.restore();c.drawImage(off,0,0);
+}
+function _rc(c,t,fs,x,y,tk,al,st,gc){
+  if(tk>0){const ch=[...t],ws=ch.map(c2=>c.measureText(c2).width),tot=ws.reduce((a,b)=>a+b,0)+tk*(ch.length-1);let cx=al==='left'?x:(al==='right'?x-tot:x-tot/2);ch.forEach((c2,i)=>{st?c.strokeText(c2,cx+ws[i]/2,y):c.fillText(c2,cx+ws[i]/2,y);cx+=ws[i]+tk;});}
+  else{st?c.strokeText(t,x,y):c.fillText(t,x,y);}
+}
+
+// ══════════════════════════════════════════
+// APP STATE
+// ══════════════════════════════════════════
+let cG='rock',cL='center',cD='auto',cF='auto';
+let saved=[];
+
+// Button groups
+function bindBtns(attr,cb){
+  document.querySelectorAll(`[${attr}]`).forEach(b=>b.addEventListener('click',()=>{
+    const v=b.dataset[attr.slice(5)];
+    document.querySelectorAll(`[${attr}]`).forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll(`[${attr}="${v}"]`).forEach(x=>x.classList.add('on'));
+    cb(v);
+  }));
+}
+bindBtns('data-g',v=>cG=v);
+bindBtns('data-l',v=>cL=v);
+bindBtns('data-d',v=>cD=v);
+bindBtns('data-f',v=>cF=v);
+
+// Mobile tabs
+document.querySelectorAll('.m-tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.m-tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.m-pane').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  document.getElementById(b.dataset.tab)?.classList.add('on');
+}));
+
+// Sliders
+function sv2(id,v){
+  const u=id==='sz'?'px':'%',lbl=v+u;
+  const pcL=document.getElementById(id+'v');if(pcL)pcL.textContent=lbl;
+  const mS=document.getElementById('m-'+id);if(mS)mS.value=v;
+  const mL=document.getElementById('m-'+id+'v');if(mL)mL.textContent=lbl;
+}
+function mSv2(id,v){
+  const u=id==='sz'?'px':'%',lbl=v+u;
+  const mL=document.getElementById('m-'+id+'v');if(mL)mL.textContent=lbl;
+  const pcS=document.getElementById(id);if(pcS)pcS.value=v;
+  const pcL=document.getElementById(id+'v');if(pcL)pcL.textContent=lbl;
+}
+const gSV=id=>document.getElementById(id)?.value||'80';
+
+// Toggle sync
+function syncToggle(src,dst,fn){
+  const v=document.getElementById(src).checked;
+  const d=document.getElementById(dst);if(d)d.checked=v;fn();
+}
+function updateDecoState(){
+  const on=document.getElementById('decoOn').checked;
+  ['decoWrap','m-decoWrap'].forEach(id=>document.getElementById(id)?.classList.toggle('off',!on));
+  const lbl=document.getElementById('decoStateLabel');if(lbl)lbl.textContent=on?'ON':'OFF';
+}
+function updateColorState(){
+  const on=document.getElementById('autoC').checked;
+  document.getElementById('colorRows').style.display=on?'none':'flex';
+  const mr=document.getElementById('m-colorRows');if(mr)mr.style.display=on?'none':'flex';
+  const lbl=document.getElementById('autoColorLabel');if(lbl)lbl.textContent=on?'AUTO':'CUSTOM';
+}
+function updC(t,v){
+  document.getElementById('sw_'+t).style.background=v;
+  document.getElementById('hex_'+t).textContent=v.slice(0,7);
+}
+function updCM(t,v){
+  document.getElementById('m-sw_'+t).style.background=v;
+  document.getElementById('m-hex_'+t).textContent=v.slice(0,7);
+}
+function getLyrics(){
+  return(document.getElementById('m-lyrics-ta')?.value.trim())||document.getElementById('lyrics')?.value.trim()||'';
+}
+
+// Sheet
+function openSheet(){document.getElementById('mobSheet').classList.add('open');document.getElementById('sheetBg').classList.add('open');}
+function closeSheet(){document.getElementById('mobSheet').classList.remove('open');document.getElementById('sheetBg').classList.remove('open');}
+
+// ══════════════════════════════════════════
+// PREVIEW
+// ══════════════════════════════════════════
+function openPv(canvas,line){
+  const bg=document.getElementById('pvBg');
+  const pvc=document.getElementById('pvCanvas');
+  pvc.width=CW;pvc.height=CH;
+  const ctx=pvc.getContext('2d');
+  ctx.fillStyle='#090910';ctx.fillRect(0,0,CW,CH);ctx.drawImage(canvas,0,0);
+  document.getElementById('pvLyric').textContent=line;
+  document.getElementById('pvDl').onclick=()=>dlC(canvas,'lyric_preview');
+  bg.classList.add('open');
+}
+function closePv(e){if(!e||e.target===document.getElementById('pvBg'))document.getElementById('pvBg').classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('pvBg').classList.remove('open');});
+
+// ══════════════════════════════════════════
+// GENERATE
+// ══════════════════════════════════════════
+function generate(){
+  const raw=getLyrics();
+  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){alert('歌詞を入力してください');return;}
+
+  ['outGrid','m-outGrid'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  saved=[];
+
+  const decoOn=document.getElementById('decoOn').checked;
+  const fs=parseInt(gSV('sz'));
+  const yp=parseInt(gSV('yp'));
+  const glMult=parseInt(gSV('gl'))/100;
+  const autoC=document.getElementById('autoC').checked;
+
+  lines.forEach((line,i)=>{
+    const gc=G[cG];
+    const fd=rFont(gc,cF);
+    const canvas=document.createElement('canvas');
+    canvas.width=CW;canvas.height=CH;
+    const ctx=canvas.getContext('2d');ctx.clearRect(0,0,CW,CH);
+    const tc=autoC?gc.tc:document.getElementById('pk_t').value;
+    const gc2=autoC?gc.gc:document.getElementById('pk_g').value;
+    const gb=gc.gb*glMult;
+    if(decoOn&&D[cD])D[cD](ctx,CW,CH,gc);
+    (L[cL]||L.center)(ctx,CW,CH,line,fd,gc,fs,yp,tc,gc2,gb);
+    saved.push({canvas,line,i});
+
+    ['outGrid','m-outGrid'].forEach(gid=>{
+      const grid=document.getElementById(gid);if(!grid)return;
+      const card=document.createElement('div');card.className='out-card';
+      const thumb=document.createElement('div');thumb.className='card-thumb';
+      const pvc=document.createElement('canvas');pvc.width=CW;pvc.height=CH;
+      const pctx=pvc.getContext('2d');pctx.fillStyle='#090910';pctx.fillRect(0,0,CW,CH);pctx.drawImage(canvas,0,0);
+      thumb.appendChild(pvc);
+      const zoom=document.createElement('div');zoom.className='card-zoom';
+      zoom.innerHTML='<span class="zoom-icon">🔍</span>';
+      thumb.appendChild(zoom);
+      thumb.style.cursor='pointer';
+      thumb.addEventListener('click',()=>openPv(canvas,line));
+      card.appendChild(thumb);
+      const foot=document.createElement('div');foot.className='card-foot';
+      const txt=document.createElement('span');txt.className='card-txt';txt.textContent=line;foot.appendChild(txt);
+      const dlb=document.createElement('button');dlb.className='card-dl';dlb.textContent='↓';
+      dlb.addEventListener('click',e=>{e.stopPropagation();dlC(canvas,`lyric_${String(i+1).padStart(2,'0')}`);});
+      foot.appendChild(dlb);card.appendChild(foot);grid.appendChild(card);
+    });
+  });
+
+  // UI update
+  const pill=document.getElementById('countPill');if(pill){pill.style.display='inline-block';pill.textContent=lines.length;}
+  document.getElementById('dlAllBtn')?.classList.add('show');
+  document.getElementById('mobDlAll')?.classList.add('show');
+  const ob=document.getElementById('mobOutBtn');
+  if(ob){ob.classList.add('live');document.getElementById('mobBadge').textContent=lines.length;}
+  if(window.innerWidth<768)openSheet();
+}
+
+// DL
+function dlC(canvas,name){
+  canvas.toBlob(blob=>{
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.png';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  },'image/png');
+}
+function dlAll(){saved.forEach(({canvas,i},idx)=>setTimeout(()=>dlC(canvas,`lyric_${String(idx+1).padStart(2,'0')}`),idx*200));}
+
+// ══════════════════════════════════════════
+// MEMORY
+// ══════════════════════════════════════════
+const MK='lyricgen_v02_mem';let mems=[];
+function loadMem(){try{mems=JSON.parse(localStorage.getItem(MK)||'[]');}catch(e){mems=[];}renderMem();}
+function snap(){return{g:cG,l:cL,d:cD,f:cF,deco:document.getElementById('decoOn').checked,sz:gSV('sz'),yp:gSV('yp'),gl:gSV('gl'),ac:document.getElementById('autoC').checked,tc:document.getElementById('pk_t').value,gc:document.getElementById('pk_g').value};}
+function applySnap(s){
+  bindBtnVal('data-g',s.g,v=>cG=v);bindBtnVal('data-l',s.l,v=>cL=v);bindBtnVal('data-d',s.d,v=>cD=v);bindBtnVal('data-f',s.f,v=>cF=v);
+  ['decoOn','m-decoOn'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=s.deco;});updateDecoState();
+  sv2('sz',s.sz);sv2('yp',s.yp);sv2('gl',s.gl);
+  ['autoC','m-autoC'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=s.ac;});updateColorState();
+  if(!s.ac){
+    ['pk_t','m-pk_t'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=s.tc;});updC('t',s.tc);updCM('t',s.tc);
+    ['pk_g','m-pk_g'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=s.gc;});updC('g',s.gc);updCM('g',s.gc);
+  }
+}
+function bindBtnVal(attr,val,cb){
+  document.querySelectorAll(`[${attr}]`).forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll(`[${attr}="${val}"]`).forEach(x=>x.classList.add('on'));
+  cb(val);
+}
+function saveMemory(){
+  const n1=document.getElementById('memIn'),n2=document.getElementById('m-memIn');
+  const name=(n1?.value.trim()||n2?.value.trim()||`Preset ${mems.length+1}`);
+  if(mems.length>=5){alert('MAX 5 presets. Delete one first.');return;}
+  const s=snap();s.name=name;mems.push(s);
+  try{localStorage.setItem(MK,JSON.stringify(mems));}catch(e){}
+  if(n1)n1.value='';if(n2)n2.value='';
+  renderMem();
+}
+function delMem(idx){mems.splice(idx,1);try{localStorage.setItem(MK,JSON.stringify(mems));}catch(e){}renderMem();}
+const GL={rock:'🎸',pop:'🌸',digital:'🤖',jazz:'🎷',anime:'✨',lofi:'🌙',hiphop:'🎤',ballad:'🕯️'};
+function renderMem(){
+  ['memList','m-memList'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(!mems.length){el.innerHTML='<div class="mem-empty">— no presets saved —</div>';return;}
+    el.innerHTML='';
+    mems.forEach((m,i)=>{
+      const item=document.createElement('div');item.className='mem-item';
+      item.innerHTML=`<span class="mem-name">${m.name}</span><span class="mem-tag">${GL[m.g]||''}${m.g.toUpperCase()}</span><button class="mem-del">×</button>`;
+      item.querySelector('.mem-del').addEventListener('click',e=>{e.stopPropagation();delMem(i);});
+      item.addEventListener('click',e=>{if(!e.target.closest('.mem-del'))applySnap(m);});
+      el.appendChild(item);
+    });
+  });
+}
+loadMem();
+</script>
+</body>
+</html>
